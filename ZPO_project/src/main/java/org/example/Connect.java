@@ -27,19 +27,5 @@ public class Connect {
         }
         return null;
     }
-    public static void printResultSet(ResultSet resultSet) throws SQLException {
-        ResultSetMetaData rsmd = resultSet.getMetaData(); // metadane o zapytaniu
-        int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
-        while (resultSet.next()) { // wyswietlenie nazw kolumn i wartosci w rzedach
-            for (int i = 1; i <= columnsNumber; i++) {
-                if (i > 1)
-                    System.out.print(", ");
-                String columnValue = resultSet.getString(i);
-                System.out.print(rsmd.getColumnName(i) + ": " + columnValue);
-            }
-            System.out.println("");
-        }
-        System.out.println("");
-    }
 }
 

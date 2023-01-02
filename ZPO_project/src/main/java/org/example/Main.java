@@ -5,6 +5,7 @@ public class Main {
         Methods methods = new Methods();
 
         methods.userBuyer(methods.logIn());
+        methods.printProductsFromCategory();
 
     }
 }

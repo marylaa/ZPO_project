@@ -15,18 +15,11 @@ public class Methods {
         String password = scanner.nextLine();
 
         ResultSet user = onlineShop.getUser(login, password);
-        String u = null;
         try {
-            u = onlineShop.getResult(user);
+            return onlineShop.getResult(user);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return u;
-//        try {
-//            onlineShop.printResultSet(user);
-//        } catch (SQLException e) {
-//            throw new RuntimeException(e);
-//        }
     }
 
     public void userBuyer(String user_type) {
@@ -34,8 +27,8 @@ public class Methods {
         DatabaseContext onlineShop = new DatabaseContext(connect.makeConnection());
         if("buyer".equals(user_type)) {
             try {
-                System.out.println("\nLista dostępnych kategorii:");
-                onlineShop.printResultSet(onlineShop.getAllCategories());
+//                System.out.println("\nLista dostępnych kategorii:");
+                onlineShop.printResultSet(onlineShop.getAllCategories(), "\nLista dostępnych kategorii:");
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -44,4 +37,20 @@ public class Methods {
         }
     }
 
+    public String chooseCategory() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("\nWybierz kategorię");
+        return scanner.nextLine();
+    }
+
+    public static void printProductsFromCategory() {
+        Connect connect = new Connect();
+        DatabaseContext onlineShop = new DatabaseContext(connect.makeConnection());
+        try {
+//            System.out.println("\nProdukty z kategorii " + category + ":");
+            onlineShop.printResultSet(onlineShop.getAllProducts(), "\nProdukty z wybranej kategorii:");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
