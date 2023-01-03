@@ -53,7 +53,7 @@ public class DatabaseContext {
         return getResult(resultFunctionCategorySt);
     }
 
-    public ResultSet getProduct() {
+    public ResultSet getProductInfo() {
         Methods methods = new Methods();
 
         try {
@@ -64,20 +64,24 @@ public class DatabaseContext {
                 productName = methods.chooseProduct();
                 productId = getProductId(productName);
             }
-            PreparedStatement functionProductSt = connection.prepareStatement("select name, producer, description, price, user_id, availability from products where id like '" + productId + "';");
+            PreparedStatement functionProductSt = connection.prepareStatement("select name, producer, description, price, (select concat(first_name, ' ', last_name) from users where id = (select user_id from products where id like '" + productId + "')), availability from products where id like '" + productId + "';");
             return functionProductSt.executeQuery();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private String getProductId(String productName) throws SQLException {
-        PreparedStatement functionProductSt = connection.prepareStatement("select id from products where name like '" + productName + "';");
-        ResultSet resultFunctionProductSt = functionProductSt.executeQuery();
-        return getResult(resultFunctionProductSt);
+    private String getProductId(String productName) {
+        try {
+            PreparedStatement functionProductSt = connection.prepareStatement("select id from products where name like '" + productName + "';");
+            ResultSet resultFunctionProductSt = functionProductSt.executeQuery();
+            return getResult(resultFunctionProductSt);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void printResultSet(ResultSet resultSet, String description) throws SQLException {
+    public void printResultSet(ResultSet resultSet, String description) throws SQLException {
         System.out.println(description);
         ResultSetMetaData rsmd = resultSet.getMetaData(); // metadane o zapytaniu
         int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
@@ -105,16 +109,17 @@ public class DatabaseContext {
         return columnValue;
     }
 
-    public static void printProductDescription(ResultSet resultSet, String description) throws SQLException {
+    public void printProductDescription(ResultSet resultSet, String description) throws SQLException {
         System.out.println(description);
         ResultSetMetaData rsmd = resultSet.getMetaData(); // metadane o zapytaniu
         int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
+        String[] column = {"nazwa produktu", "producent", "opis", "cena (w zł)", "sprzedający", "dostępność (w sztukach)"};
         while (resultSet.next()) { // wartosci w rzedach
             for (int i = 1; i <= columnsNumber; i++) {
                 if (i > 1)
                     System.out.print("\n");
                 String columnValue = resultSet.getString(i);
-                System.out.print(rsmd.getColumnLabel(i) + " - " + columnValue);
+                System.out.print(column[i - 1] + " - " + columnValue);
             }
             System.out.println("");
         }
