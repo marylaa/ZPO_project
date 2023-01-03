@@ -64,9 +64,24 @@ public class Methods {
         Connect connect = new Connect();
         DatabaseContext onlineShop = new DatabaseContext(connect.makeConnection());
         try {
-            onlineShop.printProductDescription(onlineShop.getProduct(), "\nOpis wybranego produktu:");
+            onlineShop.printProductDescription(onlineShop.getProductInfo(), "\nOpis wybranego produktu:");
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void buyProduct() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("\nCzy dodać produkt do koszyka? (t/n)");
+        String respond = scanner.nextLine();
+        while(!"t".equals(respond) && !"n".equals(respond)) {
+            System.out.println("Spróbuj ponownie. Czy dodać produkt do koszyka? (t/n)");
+            respond = scanner.nextLine();
+        }
+        if("t".equals(respond)) {
+            System.out.println("Określ ilość");
+            int amount = scanner.nextInt();
+            //dodanie produktu do koszyka
         }
     }
 }
