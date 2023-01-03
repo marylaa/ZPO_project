@@ -6,6 +6,7 @@ public class Main {
 
         methods.userBuyer(methods.logIn());
         methods.printProductsFromCategory();
+        methods.printProductInfo();
 
     }
 }

@@ -43,12 +43,28 @@ public class Methods {
         return scanner.nextLine();
     }
 
-    public static void printProductsFromCategory() {
+    public void printProductsFromCategory() {
         Connect connect = new Connect();
         DatabaseContext onlineShop = new DatabaseContext(connect.makeConnection());
         try {
 //            System.out.println("\nProdukty z kategorii " + category + ":");
             onlineShop.printResultSet(onlineShop.getAllProducts(), "\nProdukty z wybranej kategorii:");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String chooseProduct() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("\nWybierz produkt");
+        return scanner.nextLine();
+    }
+
+    public void printProductInfo() {
+        Connect connect = new Connect();
+        DatabaseContext onlineShop = new DatabaseContext(connect.makeConnection());
+        try {
+            onlineShop.printProductDescription(onlineShop.getProduct(), "\nOpis wybranego produktu:");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

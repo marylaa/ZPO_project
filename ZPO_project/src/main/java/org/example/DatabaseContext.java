@@ -53,6 +53,30 @@ public class DatabaseContext {
         return getResult(resultFunctionCategorySt);
     }
 
+    public ResultSet getProduct() {
+        Methods methods = new Methods();
+
+        try {
+            String productName = methods.chooseProduct();
+            String productId = getProductId(productName);
+            while (productId == null) {
+                System.out.println("Niepoprawna nazwa produktu. Spróbuj ponownie.");
+                productName = methods.chooseProduct();
+                productId = getProductId(productName);
+            }
+            PreparedStatement functionProductSt = connection.prepareStatement("select name, producer, description, price, user_id, availability from products where id like '" + productId + "';");
+            return functionProductSt.executeQuery();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String getProductId(String productName) throws SQLException {
+        PreparedStatement functionProductSt = connection.prepareStatement("select id from products where name like '" + productName + "';");
+        ResultSet resultFunctionProductSt = functionProductSt.executeQuery();
+        return getResult(resultFunctionProductSt);
+    }
+
     public static void printResultSet(ResultSet resultSet, String description) throws SQLException {
         System.out.println(description);
         ResultSetMetaData rsmd = resultSet.getMetaData(); // metadane o zapytaniu
@@ -79,5 +103,20 @@ public class DatabaseContext {
             }
         }
         return columnValue;
+    }
+
+    public static void printProductDescription(ResultSet resultSet, String description) throws SQLException {
+        System.out.println(description);
+        ResultSetMetaData rsmd = resultSet.getMetaData(); // metadane o zapytaniu
+        int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
+        while (resultSet.next()) { // wartosci w rzedach
+            for (int i = 1; i <= columnsNumber; i++) {
+                if (i > 1)
+                    System.out.print("\n");
+                String columnValue = resultSet.getString(i);
+                System.out.print(rsmd.getColumnLabel(i) + " - " + columnValue);
+            }
+            System.out.println("");
+        }
     }
 }
