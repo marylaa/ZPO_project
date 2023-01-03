@@ -64,7 +64,7 @@ public class Methods {
         Connect connect = new Connect();
         DatabaseContext onlineShop = new DatabaseContext(connect.makeConnection());
         try {
-            onlineShop.printProductDescription(onlineShop.getProduct(), "\nOpis wybranego produktu:");
+            onlineShop.printProductDescription(onlineShop.getProduct(), "\nOpis  wybranego produktu:");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
