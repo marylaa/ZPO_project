@@ -5,35 +5,73 @@ import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Methods {
-    public String logIn() {
-        Connect connect = new Connect();
-        DatabaseContext onlineShop = new DatabaseContext(connect.makeConnection());
+    public String[] logIn() {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Podaj login");
         String login = scanner.nextLine();
         System.out.println("Podaj hasło");
         String password = scanner.nextLine();
+        String[] data = {login, password};
+        return data;
+    }
 
-        ResultSet user = onlineShop.getUser(login, password);
+//    public String logIn() {
+//        Connect connect = new Connect();
+//        DatabaseContext onlineShop = new DatabaseContext(connect.makeConnection());
+//        Scanner scanner = new Scanner(System.in);
+//        System.out.println("Podaj login");
+//        String login = scanner.nextLine();
+//        System.out.println("Podaj hasło");
+//        String password = scanner.nextLine();
+//
+//        ResultSet user = onlineShop.getUser(login, password);
+//        try {
+//            return onlineShop.getResult(user);
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+
+    public void user() {
+        Connect connect = new Connect();
+        DatabaseContext onlineShop = new DatabaseContext(connect.makeConnection());
+        int userId = onlineShop.getUser();
+        String userType = onlineShop.getUserType(userId);
+        if("buyer".equals(userType)) {
+            userBuyer(onlineShop);
+        } else {
+            userSeller(onlineShop, userId);
+        }
+    }
+
+    private void userBuyer(DatabaseContext onlineShop) {
         try {
-            return onlineShop.getResult(user);
+            onlineShop.printResultSet(onlineShop.getAllCategories(), "\nLista dostępnych kategorii:");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void userBuyer(String user_type) {
-        Connect connect = new Connect();
-        DatabaseContext onlineShop = new DatabaseContext(connect.makeConnection());
-        if("buyer".equals(user_type)) {
-            try {
-//                System.out.println("\nLista dostępnych kategorii:");
-                onlineShop.printResultSet(onlineShop.getAllCategories(), "\nLista dostępnych kategorii:");
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            System.out.println("Użytkownik nie jest kupującym");
+    public void userSeller(DatabaseContext onlineShop, int userId) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Co chcesz zrobić, podaj numer? \n1 - wyświetlić listę swoich produktów \n2 - edytować swoje produkty \n3 - dodać nowe produkty");
+        int action = scanner.nextInt();
+        while(action != 1 && action != 2 && action != 3) {
+            System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
+            System.out.println("\nPodaj numer");
+            action = scanner.nextInt();
+        }
+        switch (action) {
+            case 1:
+                //Wyświetlenie listy produktów
+                onlineShop.printSellerProducts(userId);
+                break;
+            case 2:
+                System.out.println("Edycja");
+                break;
+            case 3:
+                System.out.println("Dodanie");
+                break;
         }
     }
 
@@ -47,7 +85,6 @@ public class Methods {
         Connect connect = new Connect();
         DatabaseContext onlineShop = new DatabaseContext(connect.makeConnection());
         try {
-//            System.out.println("\nProdukty z kategorii " + category + ":");
             onlineShop.printResultSet(onlineShop.getAllProducts(), "\nProdukty z wybranej kategorii:");
         } catch (SQLException e) {
             throw new RuntimeException(e);

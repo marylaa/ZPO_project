@@ -9,21 +9,43 @@ public class DatabaseContext {
         connection = conn;
     }
 
-    public ResultSet getUser(String userLogin, String userPassword) {
+    public int getUser() {
+        Methods methods = new Methods();
+
+        String[] loginPassword = methods.logIn();
+        String id = getUserId(loginPassword[0], loginPassword[1]);
+        while (id == null) {
+            System.out.println("\nLogowanie nie powiodło się. Spróbuj ponownie.");
+            loginPassword = methods.logIn();
+            id = getUserId(loginPassword[0], loginPassword[1]);
+        }
+        return Integer.valueOf(id);
+    }
+
+    public String getUserId(String userLogin, String userPassword) {
         try {
-            String statement = "select user_type from users where login like '" + userLogin + "' and password like '" + userPassword + "';";
-            PreparedStatement functionUserSt = connection.prepareStatement(statement);
-            return functionUserSt.executeQuery();
+            PreparedStatement function = connection.prepareStatement("select id from users where login like '" + userLogin + "' and password like '" + userPassword + "';");
+            ResultSet result = function.executeQuery();
+            return getResult(result);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String getUserType(int id) {
+        try {
+            PreparedStatement function = connection.prepareStatement("select user_type from users where id = " + id + ";");
+            ResultSet result = function.executeQuery();
+            return getResult(result);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     public ResultSet getAllCategories() {
-        PreparedStatement functionCategoriesSt = null;
         try {
-            functionCategoriesSt = connection.prepareStatement("select name from categories order by name asc;");
-            return functionCategoriesSt.executeQuery();
+            PreparedStatement function = connection.prepareStatement("select name from categories order by name asc;");
+            return function.executeQuery();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -40,17 +62,21 @@ public class DatabaseContext {
                 categoryName = methods.chooseCategory();
                 categoryId = getCategoryId(categoryName);
             }
-            PreparedStatement functionProductsSt = connection.prepareStatement("select name from products where category_id like '" + categoryId + "';");
-            return functionProductsSt.executeQuery();
+            PreparedStatement function = connection.prepareStatement("select name from products where category_id like '" + categoryId + "';");
+            return function.executeQuery();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private String getCategoryId(String categoryName) throws SQLException {
-        PreparedStatement functionCategorySt = connection.prepareStatement("select id from categories where name like '" + categoryName + "';");
-        ResultSet resultFunctionCategorySt = functionCategorySt.executeQuery();
-        return getResult(resultFunctionCategorySt);
+    private String getCategoryId(String categoryName) {
+        try {
+            PreparedStatement function = connection.prepareStatement("select id from categories where name like '" + categoryName + "';");
+            ResultSet result = function.executeQuery();
+            return getResult(result);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public ResultSet getProductInfo() {
@@ -64,8 +90,8 @@ public class DatabaseContext {
                 productName = methods.chooseProduct();
                 productId = getProductId(productName);
             }
-            PreparedStatement functionProductSt = connection.prepareStatement("select name, producer, description, price, (select concat(first_name, ' ', last_name) from users where id = (select user_id from products where id like '" + productId + "')), availability from products where id like '" + productId + "';");
-            return functionProductSt.executeQuery();
+            PreparedStatement function = connection.prepareStatement("select name, producer, description, price, (select concat(first_name, ' ', last_name) from users where id = (select user_id from products where id like '" + productId + "')), availability from products where id like '" + productId + "';");
+            return function.executeQuery();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -73,9 +99,9 @@ public class DatabaseContext {
 
     private String getProductId(String productName) {
         try {
-            PreparedStatement functionProductSt = connection.prepareStatement("select id from products where name like '" + productName + "';");
-            ResultSet resultFunctionProductSt = functionProductSt.executeQuery();
-            return getResult(resultFunctionProductSt);
+            PreparedStatement function = connection.prepareStatement("select id from products where name like '" + productName + "';");
+            ResultSet result = function.executeQuery();
+            return getResult(result);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -122,6 +148,16 @@ public class DatabaseContext {
                 System.out.print(column[i - 1] + " - " + columnValue);
             }
             System.out.println("");
+        }
+    }
+
+    public void printSellerProducts(int UserId) {
+        try {
+            PreparedStatement function = connection.prepareStatement("select name from products where user_id = " + UserId + ";");
+            ResultSet result = function.executeQuery();
+            printResultSet(result, "\nLista twoich produktów:");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 }
