@@ -1,15 +1,9 @@
 package org.example;
-<<<<<<< Updated upstream
 
-=======
->>>>>>> Stashed changes
 public class Main {
     public static void main(String[] args) {
-        Methods methods = new Methods();
+        Menu menu = new Menu();
 
-        methods.user();
-        methods.printProductsFromCategory();
-        methods.printProductInfo();
-
+        menu.startMenu();
     }
 }
