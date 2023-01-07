@@ -93,11 +93,19 @@ public class DatabaseContext {
                     "('" + id + "', '" + category + "', '" + name + "', '" + producer + "', '" + description + "', " + price + ", '" + java.time.LocalDate.now() + "', " + userId + ", " + availability + ");");
             System.out.println("\nPomyślnie dodano produkt.");
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            System.out.println("Niepoprawne dane");;
         }
     }
 
-    public void editProduct(String id) {
+    public void editProduct(String id, String[] info) {
+        try {
+            Statement statement = connection.createStatement();
+            statement.executeUpdate("update products set name = '" + info[0] + "', producer = '" + info[1] + "', description = '" + info[2] + "', price = " + info[3] +
+                    ", availability = " + info[5] + " where id like '" + id + "';");
+            System.out.println("\nPomyślnie edytowano produkt.");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     //DOKONCZYC
     }
 
@@ -109,6 +117,18 @@ public class DatabaseContext {
         while (resultSet.next()) {
             for (int i = 1; i <= columnsNumber; i++) {
                 columnValue = resultSet.getString(i);
+            }
+        }
+        return columnValue;
+    }
+
+    public String[] getResultAsTable(ResultSet resultSet) throws SQLException {
+        ResultSetMetaData rsmd = resultSet.getMetaData();
+        int columnsNumber = rsmd.getColumnCount();
+        String[] columnValue = new String[columnsNumber];
+        while (resultSet.next()) {
+            for (int i = 1; i <= columnsNumber; i++) {
+                columnValue[i - 1] = resultSet.getString(i);
             }
         }
         return columnValue;

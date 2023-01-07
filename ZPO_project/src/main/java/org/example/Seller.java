@@ -43,11 +43,31 @@ public class Seller {
             productName = menu.getInput("Wybierz produkt");
             productId = onlineShop.getProductId(productName);
         }
-        onlineShop.editProduct(productId);
+        try {
+            String[] productInfo = onlineShop.getResultAsTable(onlineShop.getProductInfo(productId));
+
+            System.out.println("\nWprowadź dane, które chcesz edytować:");
+            String[] column = {"nazwie produktu", "producencie", "opisie", "cenie (w zł)", "sprzedającym", "dostępności (w sztukach)"};
+            String[] input = new String[productInfo.length];
+
+            for (int i = 0; i < productInfo.length; i++) {
+                if(i == 4) {
+                    continue;
+                }
+                System.out.println("Aktualne informacje o " + column[i] + ": " + productInfo[i]);
+                input[i] = menu.getInput("Nowe informacje:");
+                if("".equals(input[i])) {
+                    input[i] = productInfo[i];
+                }
+            }
+            onlineShop.editProduct(productId, input);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void sellerAddProducts(int userId) {
-        String id = menu.getInput("\nPodaj id produktu");
+        String id = menu.getInput("Podaj id produktu");
         String category = menu.getInput("Podaj id kategorii");
         String name = menu.getInput("Podaj nazwę produktu");
         String producer = menu.getInput("Podaj producenta");

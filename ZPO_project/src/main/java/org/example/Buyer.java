@@ -89,6 +89,8 @@ public class Buyer {
             switch (action) {
                 case "1":
                     //KUPNO PRODUKTU
+
+                    //pozniej wyswietlenie kategorii
                     printCategories();
                     break;
                 case "2":

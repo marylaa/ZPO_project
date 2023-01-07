@@ -20,7 +20,7 @@ public class Menu {
 
     public void startMenu() {
         if(userId == 0) {
-            System.out.println("Sklep internetowy");
+            System.out.println("\nSklep internetowy");
             login();
         }
 
@@ -41,7 +41,7 @@ public class Menu {
                     //KOSZYK
                     break;
                 case "4":
-                    //WYLOGOWANIE
+                    logout();
                     break;
             }
         } else {
@@ -59,7 +59,7 @@ public class Menu {
                     startMenu();
                     break;
                 case "3":
-                    //WYLOGOWANIE
+                    logout();
                     break;
             }
         }
@@ -85,6 +85,23 @@ public class Menu {
         this.userType = onlineShop.getUserType(userId);
     }
 
+    public void logout() {
+        String action = getInput("Czy na pewno chcesz się wylogować? (tak/nie)");
+        while (!"tak".equals(action) && !"nie".equals(action)) {
+            System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
+            action = getInput("Czy na pewno chcesz się wylogować? (tak/nie)");
+        }
+        switch (action) {
+            case "tak":
+                this.userId = 0;
+                this.userType = null;
+                startMenu();
+                break;
+            case "nie":
+                startMenu();
+                break;
+        }
+    }
 
     public void printResultSet(ResultSet resultSet, String description) throws SQLException {
         System.out.println(description);
