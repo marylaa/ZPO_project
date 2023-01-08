@@ -14,60 +14,155 @@ public class Cart {
 
     private Connection connection;
 
-    public Cart(Connection conn) {
+
+
+    private int clientId;
+    private Map<Products, Integer> cartProducts = new HashMap<Products, Integer>();
+
+    public Cart(Connection conn, int clientId) {
         connection = conn;
+        try {
+            Connect connect = new Connect();
+            PreparedStatement selectAllSt = connection.prepareStatement("select id from carts where client_id='" + clientId + "';");
+            ResultSet rsAllSt = selectAllSt.executeQuery();
+
+
+            if (rsAllSt.next()) {
+
+                int cartId = rsAllSt.getInt(1);
+                PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, quantity from cart_items where cart_id='" + cartId + "';");
+                ResultSet rsAllSt1 = selectAllSt1.executeQuery();
+
+                while (rsAllSt1.next()) {
+                    String productId = rsAllSt1.getString(1);
+                    int productQuantity = rsAllSt1.getInt(2);
+
+
+
+                    PreparedStatement selectAllSt5 = connection.prepareStatement("select name from products where id='" + productId + "';");
+                    ResultSet name = selectAllSt5.executeQuery();
+                    while(name.next()) {
+                        String productName = name.getString(1);
+
+                        Products products = new Products(connect.makeConnection(), productName);
+                        cartProducts.put(products, productQuantity);
+                    }
+                }
+
+            } else {
+                //System.out.println("puste");
+
+            }
+
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
-    //Map<String, Integer> cartProducts = new HashMap<String, Integer>();
-    //Dictionary dict = new Hashtable();
-    private static int uniqueSequence = 0;
 
-
-    private int cartId;
-    private Map<String, Integer> cartProducts = new HashMap<String, Integer>();
-
-
-    public void setCartId() {
-        this.cartId = uniqueSequence++;
-    }
-
-    public int getCartId() {
-        return cartId;
-    }
 
     public String addProduct(String productName, int number) {
         Connect connect = new Connect();
-//            PreparedStatement selectAllSt = connection.prepareStatement("select availability from products where name like'" + productName + "';");
-//            ResultSet rsAllSt = selectAllSt.executeQuery();
+
 
         Products products = new Products(connect.makeConnection(), productName);
 
-        int availability = products.getAvailability();
 
-        if (availability >= number) {
-            cartProducts.put(productName, number);
-            return "dodano";
-        } else {
-            return "brak";
+
+        Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
+        boolean inDict = false;
+        for (Map.Entry<Products, Integer> it : s) {
+
+            Products productNameMap = it.getKey();
+            if (productNameMap.getName().equals(productName)) {
+                String bo = changeProductValueMore(productName,number);
+
+                if(bo.equals("false")){
+                    return "brak";
+                }else{
+                    inDict = true;
+                    return "dodano";
+                }
+
+            }
+
+        }
+        if(!inDict){
+            if (products.checkAvailability() >= number) {
+                cartProducts.put(products, number);
+                return "dodano";
+            } else {
+                return "brak";
+            }
+        }
+        return "brak";
+
+
+    }
+
+    public String changeProductValueLess(String productName, int toDelete) {
+        Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
+
+        for (Map.Entry<Products, Integer> it : s) {
+            Products productNameMap = it.getKey();
+            Integer number = it.getValue();
+            int newNumber = number - toDelete;
+            if(newNumber >= 0) {
+                if (productNameMap.getName().equals(productName)) {
+
+                    cartProducts.replace(productNameMap, newNumber);
+
+                }
+            }else{
+                return "niewlasciwa";
+            }
+
         }
 
-    }
-
-    public String changeProductValueLess(String productName) {
-        int number = cartProducts.get(productName);
-        cartProducts.replace(productName, number - 1);
         return "done";
     }
 
-    public String changeProductValueMore(String productName) {
-        int number = cartProducts.get(productName);
-        cartProducts.replace(productName, number + 1);
+    public String changeProductValueMore(String productName, int toAdd) {
+        Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
+        Connect connect = new Connect();
+        Products products = new Products(connect.makeConnection(), productName);
+
+
+        for (Map.Entry<Products, Integer> it : s) {
+            Products productNameMap = it.getKey();
+            if (productNameMap.getName().equals(productName)) {
+                Integer number = it.getValue();
+                int newNumber = number + toAdd;
+                if (products.checkAvailability() >= newNumber) {
+                    cartProducts.replace(productNameMap,newNumber);
+                } else {
+                    return "false";
+                }
+
+            }
+
+
+        }
         return "done";
     }
+
 
     public String deleteOneProduct(String productName) {
-        cartProducts.remove(productName);
+
+        Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
+
+        for (Map.Entry<Products, Integer> it : s) {
+            Products productNameMap = it.getKey();
+            if(productNameMap.getName().equals(productName)){
+                cartProducts.remove(productName);
+
+            }
+
+        }
+
+
         return "done";
     }
 
@@ -77,23 +172,15 @@ public class Cart {
     }
 
     public void showCart() {
-        Set<Map.Entry<String, Integer>> s = cartProducts.entrySet();
+        Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
 
-        for (Map.Entry<String, Integer> it : s) {
-            String productName = it.getKey();
+        for (Map.Entry<Products, Integer> it : s) {
+            Products productName = it.getKey();
             Integer number = it.getValue();
-            System.out.println("Produkt: " + productName + ", liczba: " + number);
+            System.out.println("Produkt: " + productName.getName() + ", liczba: " + number);
         }
     }
 
-    public void deleteCart() {
-
-    }
-
-    public String reloadCart() {
-
-        return "done";
-    }
 
     public void checkOrdersHistory(int clientId) {
 
@@ -107,32 +194,40 @@ public class Cart {
             //client.next();
             printResultSet(client);
 
-            System.out.println("Szczegóły zamówienia:");
-            System.out.println("id zamówienia, data utworzenia, wartość zamówienia [zł]");
+
 
             PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, order_value from order_details where client_id='" + clientId + "';");
             ResultSet orderDetails = selectAllSt.executeQuery();
 
-            while (orderDetails.next()) {
+            while(orderDetails.next()) {
                 //orderDetails.next();
                 int orderId = orderDetails.getInt(1);
-                printResultSet(orderDetails);
+                //printResultSet(orderDetails);
+                String date = orderDetails.getString(2);
+                String value1 = orderDetails.getString(3);
 
-                System.out.println("Zamówione produkty:");
-                PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, order_id, quantity, items_value from order_items where order_id='" + orderId + "' group by order_id;");
+                System.out.println("Szczegóły zamówienia:");
+                System.out.println("id zamówienia, data utworzenia, wartość zamówienia [zł]");
+                System.out.println(orderId + " " + date + " " + value1);
+
+                System.out.println("Zamówione produkty : ");
+                PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, order_id, quantity, items_value from order_items where order_id='" + orderId + "';");
                 ResultSet orderedItems = selectAllSt1.executeQuery();
-                orderedItems.next();
-                String productsId = orderedItems.getString(1);
-                int quantity = orderedItems.getInt(3);
-                double value = orderedItems.getInt(4);
-                System.out.println(value + " zł");
-                System.out.println(quantity + " szt.");
 
-                PreparedStatement selectAllSt5 = connection.prepareStatement("select name from products where id='" + productsId + "';");
-                ResultSet name = selectAllSt5.executeQuery();
-                //name.next();
-                printResultSet(name);
+                while(orderedItems.next()) {
 
+                    String productsId = orderedItems.getString(1);
+                    int quantity = orderedItems.getInt(3);
+                    double value = orderedItems.getInt(4);
+
+                    System.out.println(value + " zł");
+                    System.out.println(quantity + " szt.");
+
+                    PreparedStatement selectAllSt5 = connection.prepareStatement("select name from products where id='" + productsId + "';");
+                    ResultSet name = selectAllSt5.executeQuery();
+                    //name.next();
+                    printResultSet(name);
+                }
 
             }
 
@@ -147,14 +242,31 @@ public class Cart {
     public ImmutableTriple<String, Double, String> saveCart(int clientId) {
 
 
-        Set<Map.Entry<String, Integer>> s = cartProducts.entrySet();
-        //cartId = uniqueSequence++;
-        //int clientId = 3;
+        Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
+
 
 
         try {
             Connect connect = new Connect();
             Statement stmt = connection.createStatement();
+
+            PreparedStatement selectAllSt2 = connection.prepareStatement("select id from carts order by id desc limit 1");
+            ResultSet cartToDelete = selectAllSt2.executeQuery();
+
+            while(cartToDelete.next()) {
+                int cartToDeleteInt = cartToDelete.getInt(1);
+
+                String sql00 = "delete from cart_items where cart_id='" + cartToDeleteInt + "';";
+                stmt.executeUpdate(sql00);
+
+                String sql0 = "delete from carts where id='" + cartToDeleteInt + "';";
+                stmt.executeUpdate(sql0);
+
+            }
+
+
+
+
 
             String sql = "INSERT INTO carts(client_id) VALUES(" + clientId + ");";
             stmt.executeUpdate(sql);
@@ -166,28 +278,21 @@ public class Cart {
 
         double cartValue = 0;
 
-        for (Map.Entry<String, Integer> it : s) {
-            String productName = it.getKey();
+        for (Map.Entry<Products, Integer> it : s) {
+            Products product = it.getKey();
+            String productName = product.getName();
             Integer number = it.getValue();
 
             try {
                 Connect connect = new Connect();
                 Statement stmt = connection.createStatement();
 
-//                PreparedStatement selectAllSt1 = connection.prepareStatement("select id from products where name like'" + productName + "';");
-//                ResultSet productId = selectAllSt1.executeQuery();
-//                productId.next();
-//                //printResultSet(productId);
-//                String idString = productId.getString(1);
 
-                Products products = new Products(connect.makeConnection(), productName);
-                String idString = products.getId();
-                double priceInt = products.getPrice();
 
-//                PreparedStatement selectAllSt2 = connection.prepareStatement("select price from products where name like'" + productName + "';");
-//                ResultSet price = selectAllSt2.executeQuery();
-//                price.next();
-//                double priceInt = price.getDouble(1);
+                String idString = product.getId();
+                double priceInt = product.getPrice();
+
+
 
                 double itemsValue = number * priceInt;
 
@@ -227,10 +332,10 @@ public class Cart {
 
     }
 
-    //potrzebujhe do funkcji dodac indeks uzytkownika!!!!!
+//    //potrzebujhe do funkcji dodac indeks uzytkownika!!!!!
     public String buyCart(int clientId) {
 
-        Set<Map.Entry<String, Integer>> s = cartProducts.entrySet();
+        Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
 
         ImmutableTriple<String, Double, String> immutableTriple = saveCart(clientId);
         double cartValue = immutableTriple.getMiddle();
@@ -245,27 +350,37 @@ public class Cart {
             stmt.executeUpdate(sql);
 
 
-            for (Map.Entry<String, Integer> it : s) {
-                String productName = it.getKey();
+            for (Map.Entry<Products, Integer> it : s) {
+                Products product = it.getKey();
                 Integer number = it.getValue();
 
-                Products products = new Products(connect.makeConnection(), productName);
 
-                PreparedStatement selectAllSt3 = connection.prepareStatement("select id from order_details where client_id=" + clientId + ";");
+                PreparedStatement selectAllSt3 = connection.prepareStatement("select id from order_details order by id desc;");
                 ResultSet orderTempId = selectAllSt3.executeQuery();
                 orderTempId.next();
                 String orderId = orderTempId.getString(1);
 
-//                PreparedStatement selectAllSt4 = connection.prepareStatement("select price from products where name=" + productName + ";");
-//                ResultSet price = selectAllSt4.executeQuery();
-//                orderTempId.next();
-//                String priceFinall = price.getString(1);
 
-                double itemsValue = number * products.getPrice();
+                double itemsValue = number * product.getPrice();
 
 
-                String sql1 = "INSERT INTO order_items(product_id, order_id, quantity, items_value) VALUES('" + products.getId() + "','" + orderId + "'," + number + "," + itemsValue + ");";
+                String sql1 = "INSERT INTO order_items(product_id, order_id, quantity, items_value) VALUES('" + product.getId() + "','" + orderId + "'," + number + "," + itemsValue + ");";
                 stmt.executeUpdate(sql1);
+
+                PreparedStatement selectAllSt6 = connection.prepareStatement("select id from carts where client_id='" + clientId + "';");
+                ResultSet cartId = selectAllSt6.executeQuery();
+                while(cartId.next()) {
+                    int cart = cartId.getInt(1);
+
+                    String sql7 = "delete from cart_items where cart_id=" + cart + ";";
+                    stmt.executeUpdate(sql7);
+                }
+
+                String sql5 = "delete from carts where client_id='" + clientId + "';";
+                stmt.executeUpdate(sql5);
+
+                String sql8 = "update products set availability=availability-" + number + " where id='" + product.getId() + "';";
+                stmt.executeUpdate(sql8);
 
             }
 
