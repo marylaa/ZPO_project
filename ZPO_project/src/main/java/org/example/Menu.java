@@ -1,5 +1,12 @@
 package org.example;
 
+import org.apache.commons.codec.binary.Hex;
+
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -19,7 +26,7 @@ public class Menu {
     }
 
     public void startMenu() {
-        if(userId == 0) {
+        if (userId == 0) {
             System.out.println("\nSklep internetowy");
             login();
         }
@@ -76,13 +83,43 @@ public class Menu {
         this.buyer = new Buyer();
         this.seller = new Seller();
 
-        String id = onlineShop.getUserId(getInput("Podaj login"), getInput("Podaj hasło"));
-        while (id == null) {
-            System.out.println("\nLogowanie nie powiodło się. Spróbuj ponownie.");
-            id = onlineShop.getUserId(getInput("Podaj login"), getInput("Podaj hasło"));
+        String userLogin = getInput("Podaj login");
+        String userPassword = getInput("Podaj hasło");
+        String[] data = onlineShop.getUserIdAndPasswordAndSalt(userLogin);
+        while (data[0] == null) {
+            System.out.println("\nNie znaleziono użytkownika o podanym loginie. Spróbuj ponownie.");
+            userLogin = getInput("Podaj login");
+            userPassword = getInput("Podaj hasło");
+            data = onlineShop.getUserIdAndPasswordAndSalt(userLogin);
         }
-        this.userId = Integer.valueOf(id);
-        this.userType = onlineShop.getUserType(userId);
+
+        String hashedPassword = hashPassword(userPassword, data[2]);
+        if (data[1].equals(hashedPassword)) {
+            this.userId = Integer.valueOf(data[0]);
+            this.userType = onlineShop.getUserType(userId);
+            System.out.println("\nPoprawnie zalogowano.");
+        } else {
+            System.out.println("\nLogowanie nie powiodło się. Spróbuj ponownie.");
+            login();
+        }
+    }
+
+    public static String hashPassword(String password, String salt) {
+        int iterations = 10000;
+        int keyLength = 512;
+        char[] passwordChars = password.toCharArray();
+        byte[] saltBytes = salt.getBytes();
+
+        try {
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
+            PBEKeySpec spec = new PBEKeySpec(passwordChars, saltBytes, iterations, keyLength);
+            SecretKey key = skf.generateSecret(spec);
+            byte[] hashedBytes = key.getEncoded();
+            String hashedString = Hex.encodeHexString(hashedBytes);
+            return hashedString;
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void logout() {

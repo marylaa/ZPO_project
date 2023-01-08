@@ -26,7 +26,6 @@ public class Seller {
         switch (action) {
             case "1":
                 sellerEditProduct();
-                //DOKONCZYC
                 menu.startMenu();
                 break;
             case "2":

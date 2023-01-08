@@ -9,11 +9,11 @@ public class DatabaseContext {
         connection = conn;
     }
 
-    public String getUserId(String userLogin, String userPassword) {
+    public String[] getUserIdAndPasswordAndSalt(String userLogin) {
         try {
-            PreparedStatement function = connection.prepareStatement("select id from users where login like '" + userLogin + "' and password like '" + userPassword + "';");
+            PreparedStatement function = connection.prepareStatement("select id, password, salt from users where login like '" + userLogin + "';");
             ResultSet result = function.executeQuery();
-            return getResult(result);
+            return getResultAsTable(result);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -106,7 +106,6 @@ public class DatabaseContext {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    //DOKONCZYC
     }
 
 
