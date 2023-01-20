@@ -360,7 +360,7 @@ public class Cart {
                 Products product = it.getKey();
                 Integer number = it.getValue();
 
-                System.out.println(stats.addToProductStats(product.getId()));
+                stats.addToProductStats(product.getId());
 
                 PreparedStatement selectAllSt1 = connection.prepareStatement("select id from product_stats where product_id='" + product.getId() + "';");
                 ResultSet rs1 = selectAllSt1.executeQuery();
@@ -373,7 +373,9 @@ public class Cart {
                     ResultSet rs2 = selectAllSt2.executeQuery();
                     if(rs2.next()){
                         int quantity = rs2.getInt(1);
-
+                        String sql9 = "update product_stats set purchased_quantity=" + quantity + "+" + number + " where id='" + productStatsId + "';";
+                        stmt.executeUpdate(sql9);
+                        return "done";
                     }
                     int quantity = 0;
 
