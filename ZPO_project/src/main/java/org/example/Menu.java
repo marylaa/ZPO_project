@@ -7,22 +7,17 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Menu {
     private static String userType;
     private static int userId;
-    private static Connect connect;
     private static DatabaseContext onlineShop;
     private static Seller seller;
     private static Buyer buyer;
 
     public Menu() {
-        this.connect = new Connect();
-        this.onlineShop = new DatabaseContext(connect.makeConnection());
+        this.onlineShop = new DatabaseContext(Connect.makeConnection());
     }
 
     public void startMenu() {
@@ -48,6 +43,7 @@ public class Menu {
                     //KOSZYK
                     break;
                 case "4":
+                    //pytanie czy zapisac koszyk
                     logout();
                     break;
             }
@@ -105,6 +101,7 @@ public class Menu {
     }
 
     public static String hashPassword(String password, String salt) {
+        //https://medium.com/@kasunpdh/how-to-store-passwords-securely-with-pbkdf2-204487f14e84
         int iterations = 10000;
         int keyLength = 512;
         char[] passwordChars = password.toCharArray();
@@ -137,38 +134,6 @@ public class Menu {
             case "nie":
                 startMenu();
                 break;
-        }
-    }
-
-    public void printResultSet(ResultSet resultSet, String description) throws SQLException {
-        System.out.println(description);
-        ResultSetMetaData rsmd = resultSet.getMetaData(); // metadane o zapytaniu
-        int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
-        while (resultSet.next()) { // wartosci w rzedach
-            for (int i = 1; i <= columnsNumber; i++) {
-                if (i > 1)
-                    System.out.print(", ");
-                String columnValue = resultSet.getString(i);
-                System.out.print(columnValue);
-            }
-            System.out.println("");
-        }
-    }
-
-
-    public void printProductDescription(ResultSet resultSet, String description) throws SQLException {
-        System.out.println(description);
-        ResultSetMetaData rsmd = resultSet.getMetaData();
-        int columnsNumber = rsmd.getColumnCount();
-        String[] column = {"nazwa produktu", "producent", "opis", "cena (w zł)", "sprzedający", "dostępność (w sztukach)"};
-        while (resultSet.next()) {
-            for (int i = 1; i <= columnsNumber; i++) {
-                if (i > 1)
-                    System.out.print("\n");
-                String columnValue = resultSet.getString(i);
-                System.out.print(column[i - 1] + " - " + columnValue);
-            }
-            System.out.println("");
         }
     }
 }

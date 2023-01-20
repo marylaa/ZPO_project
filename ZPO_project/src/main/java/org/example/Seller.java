@@ -3,18 +3,17 @@ package org.example;
 import java.sql.SQLException;
 
 public class Seller {
-    private Connect connect;
+
     private DatabaseContext onlineShop;
     private Menu menu;
 
     public Seller() {
-        this.connect = new Connect();
-        this.onlineShop = new DatabaseContext(connect.makeConnection());
+        this.onlineShop = new DatabaseContext(Connect.makeConnection());
         this.menu = new Menu();
     }
     public void showAndEditProducts(int id) {
         try {
-            menu.printResultSet(onlineShop.getSellerProducts(id), "\nLista twoich produktów:");
+            onlineShop.printResultSet(onlineShop.getSellerProducts(id), "\nLista twoich produktów:");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -76,5 +75,6 @@ public class Seller {
         String availability = menu.getInput("Podaj dostępną liczbę sztuk");
         int availabilityInteger = Integer.valueOf(availability);
         onlineShop.addProduct(id, category, name, producer, description, priceDouble, userId, availabilityInteger);
+        //addToProductStats(id)
     }
 }

@@ -3,10 +3,11 @@ package org.example;
 import java.sql.*;
 
 public class DatabaseContext {
-    private static Connection connection;
 
-    public DatabaseContext(Connection conn) {
-        connection = conn;
+    private Connection connection;
+
+    public DatabaseContext(Connection connection) {
+        this.connection = connection;
     }
 
     public String[] getUserIdAndPasswordAndSalt(String userLogin) {
@@ -79,8 +80,7 @@ public class DatabaseContext {
     public ResultSet getSellerProducts(int UserId) {
         try {
             PreparedStatement function = connection.prepareStatement("select name from products where user_id = " + UserId + ";");
-            ResultSet result = function.executeQuery();
-            return result;
+            return function.executeQuery();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -103,6 +103,15 @@ public class DatabaseContext {
             statement.executeUpdate("update products set name = '" + info[0] + "', producer = '" + info[1] + "', description = '" + info[2] + "', price = " + info[3] +
                     ", availability = " + info[5] + " where id like '" + id + "';");
             System.out.println("\nPomyślnie edytowano produkt.");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String checkPurchasedQuantityOfProduct(String productId) {
+        try {
+            PreparedStatement function = connection.prepareStatement("select purchased_quantity from product_stats where product_id = '" + productId + "';");
+            return getResult(function.executeQuery());
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -131,5 +140,20 @@ public class DatabaseContext {
             }
         }
         return columnValue;
+    }
+
+    public void printResultSet(ResultSet resultSet, String description) throws SQLException {
+        System.out.println(description);
+        ResultSetMetaData rsmd = resultSet.getMetaData(); // metadane o zapytaniu
+        int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
+        while (resultSet.next()) { // wartosci w rzedach
+            for (int i = 1; i <= columnsNumber; i++) {
+                if (i > 1)
+                    System.out.print(", ");
+                String columnValue = resultSet.getString(i);
+                System.out.print(columnValue);
+            }
+            System.out.println("");
+        }
     }
 }

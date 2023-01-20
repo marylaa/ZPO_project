@@ -3,7 +3,8 @@ package org.example;
 import java.sql.*;
 
 public class Connect {
-    public Connection makeConnection() {
+
+    public static Connection makeConnection() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
