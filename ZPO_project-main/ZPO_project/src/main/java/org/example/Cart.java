@@ -19,6 +19,8 @@ public class Cart {
     private int clientId;
     private Map<Products, Integer> cartProducts = new HashMap<Products, Integer>();
 
+
+
     public Cart(Connection conn, int clientId) {
         connection = conn;
         try {
@@ -196,6 +198,7 @@ public class Cart {
 
 
 
+
             PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, order_value from order_details where client_id='" + clientId + "';");
             ResultSet orderDetails = selectAllSt.executeQuery();
 
@@ -340,10 +343,13 @@ public class Cart {
         ImmutableTriple<String, Double, String> immutableTriple = saveCart(clientId);
         double cartValue = immutableTriple.getMiddle();
 
+
         try {
             Connect connect = new Connect();
 
             Statement stmt = connection.createStatement();
+            inProductStats stats = new inProductStats(connect.makeConnection());
+
 
             String sql = "insert into order_details(client_id, created_date, order_value, status)" +
                     " values (" + clientId + ", current_timestamp()," + cartValue + ", 'created');";
@@ -353,6 +359,29 @@ public class Cart {
             for (Map.Entry<Products, Integer> it : s) {
                 Products product = it.getKey();
                 Integer number = it.getValue();
+
+                System.out.println(stats.addToProductStats(product.getId()));
+
+                PreparedStatement selectAllSt1 = connection.prepareStatement("select id from product_stats where product_id='" + product.getId() + "';");
+                ResultSet rs1 = selectAllSt1.executeQuery();
+                if(rs1.next()) {
+
+                    int productStatsId = rs1.getInt(1);
+                    System.out.println(productStatsId);
+
+                    PreparedStatement selectAllSt2 = connection.prepareStatement("select purchased_quantity from product_stats where product_id='" + productStatsId + "';");
+                    ResultSet rs2 = selectAllSt2.executeQuery();
+                    if(rs2.next()){
+                        int quantity = rs2.getInt(1);
+
+                    }
+                    int quantity = 0;
+
+                    String sql9 = "update product_stats set purchased_quantity=" + quantity + "+" + number + " where id='" + productStatsId + "';";
+                    stmt.executeUpdate(sql9);
+                    return "done";
+
+                }
 
 
                 PreparedStatement selectAllSt3 = connection.prepareStatement("select id from order_details order by id desc;");
@@ -381,6 +410,13 @@ public class Cart {
 
                 String sql8 = "update products set availability=availability-" + number + " where id='" + product.getId() + "';";
                 stmt.executeUpdate(sql8);
+
+
+
+
+
+
+
 
             }
 
