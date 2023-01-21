@@ -2,6 +2,8 @@ package org.example;
 
 import java.sql.*;
 
+import static org.example.Cart.printResultSet;
+
 public class Opinions {
 
     private Connection connection;
@@ -10,7 +12,7 @@ public class Opinions {
         connection = conn;
     }
 
-    public String addOpinion(int clientId,String productName, String text){
+    public String addOpinion(int clientId,String productName, String text,double rating){
 
 
 
@@ -24,34 +26,50 @@ public class Opinions {
 
             if(rs.next()){
                 String userType = rs.getString(1);
-                if(("buyer").equals(userType)){
+                if(("client").equals(userType)){
 
                     Products products = new Products(connect.makeConnection(),productName);
+                    inProductStats stats = new inProductStats(connect.makeConnection());
 
-                    PreparedStatement selectAllSt1 = connection.prepareStatement("select id from product_stats where product_id='" + products.getId() + "';");
+                    stats.addToProductStats(products.getId());
+//
+                    PreparedStatement selectAllSt1 = connection.prepareStatement("select id, rating from product_stats where product_id='" + products.getId() + "';");
                     ResultSet rs1 = selectAllSt1.executeQuery();
                     if(rs1.next()) {
 
                         int productStatsId = rs1.getInt(1);
+                        double productStatsRating = rs1.getInt(2);
 
                         String sql1 = "INSERT INTO product_opinions(product_stat_id, client_id, description) values('" + productStatsId + "','" + clientId + "','" + text + "');";
                         stmt.executeUpdate(sql1);
-                        return "done";
+
+                        if(productStatsRating == 0){
+                            double finalRating = rating;
+                            String sql9 = "update product_stats set rating=" + finalRating + " where id='" + productStatsId + "';";
+                            stmt.executeUpdate(sql9);
+                            return "done";
+                        }else if(productStatsRating != 0) {
+                            double finalRating = (productStatsRating + rating) / 2;
+                            String sql9 = "update product_stats set rating=" + finalRating + " where id='" + productStatsId + "';";
+                            stmt.executeUpdate(sql9);
+                            return "done";
+                        }
+
 
                     }
-                    String sql = "INSERT INTO product_stats(product_id) value('" + products.getId() + "');";
-                    stmt.executeUpdate(sql);
-
-
-                    PreparedStatement selectAllSt4 = connection.prepareStatement("select id from product_stats where product_id='" + products.getId() + "';");
-                    ResultSet rs4 = selectAllSt4.executeQuery();
-                    if(rs4.next()) {
-                        int productStatsId = rs4.getInt(1);
-
-
-                        String sql5 = "INSERT INTO product_opinions(product_stat_id, client_id, description) values('" + productStatsId + "','" + clientId + "','" + text + "');";
-                        stmt.executeUpdate(sql5);
-                    }
+//                    String sql = "INSERT INTO product_stats(product_id) value('" + products.getId() + "');";
+//                    stmt.executeUpdate(sql);
+//
+//
+//                    PreparedStatement selectAllSt4 = connection.prepareStatement("select id from product_stats where product_id='" + products.getId() + "';");
+//                    ResultSet rs4 = selectAllSt4.executeQuery();
+//                    if(rs4.next()) {
+//                        int productStatsId = rs4.getInt(1);
+//
+//
+//                        String sql5 = "INSERT INTO product_opinions(product_stat_id, client_id, description) values('" + productStatsId + "','" + clientId + "','" + text + "');";
+//                        stmt.executeUpdate(sql5);
+//                    }
 
                 }else{
                     return "not buyer";
@@ -64,4 +82,50 @@ public class Opinions {
         return "done";
     }
 
+    public String showOpinions(String productName){
+
+
+        try {
+            Connect connect = new Connect();
+            connect.makeConnection();
+            Statement stmt = connection.createStatement();
+
+            Products products = new Products(connect.makeConnection(), productName);
+
+            System.out.println("Opinie o produkcie " + productName);
+            PreparedStatement selectAllSt = connection.prepareStatement("select description from opinions where product_id='" + products.getId() + "';");
+            ResultSet rs = selectAllSt.executeQuery();
+            printResultSetEnumerate(rs);
+
+            PreparedStatement selectAllSt1 = connection.prepareStatement("select rating from opinions where product_id='" + products.getId() + "' limit 1;");
+            ResultSet rs1 = selectAllSt1.executeQuery();
+            System.out.println("Ocena (skala 1 - 5):");
+            printResultSet(rs1);
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return "done";
+
+
+
+    }
+    public static void printResultSetEnumerate(ResultSet resultSet) throws SQLException {
+        ResultSetMetaData rsmd = resultSet.getMetaData();
+        int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
+        int counter = 1;
+        while (resultSet.next()) {
+            for (int i = 1; i <= columnsNumber; i++) {
+                if (i > 1)
+                    System.out.print(", ");
+                String columnValue = resultSet.getString(i);
+                System.out.print("Opinia " + counter + ": " + columnValue);
+                counter += 1;
+            }
+            System.out.println("");
+        }
+        System.out.println("");
+
+    }
 }
+
