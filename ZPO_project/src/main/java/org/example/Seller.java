@@ -75,6 +75,5 @@ public class Seller {
         String availability = menu.getInput("Podaj dostępną liczbę sztuk");
         int availabilityInteger = Integer.valueOf(availability);
         onlineShop.addProduct(id, category, name, producer, description, priceDouble, userId, availabilityInteger);
-        //addToProductStats(id)
     }
 }

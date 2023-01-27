@@ -117,6 +117,43 @@ public class DatabaseContext {
         }
     }
 
+    public void getSortedProducts(String sortBy, String direction, String categoryId){
+        try {
+            PreparedStatement function = connection.prepareStatement("select name," +  sortBy + " from product_view where category_id = '" + categoryId + "' order by " + sortBy + " " + direction + " ;");
+            printResultSet(function.executeQuery(), "\nPosortowane produkty:");
+
+            String sortByPl = " ";
+            if(sortBy.equals("rating")){
+                sortByPl = "ocena";
+            }else if(sortBy.equals("added_date")){
+                sortByPl = "data dodania";
+            }else if(sortBy.equals("price")){
+                sortByPl = "cena";
+            }
+            printResultSetSorting(function.executeQuery(), sortByPl);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void printResultSetSorting(ResultSet resultSet, String SortByPl) throws SQLException {
+        ResultSetMetaData rsmd = resultSet.getMetaData();
+        int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
+        int counter = 1;
+        while (resultSet.next()) {
+            for (int i = 1; i <= columnsNumber; i++) {
+                if (i > 1)
+                    System.out.print(", " + SortByPl + " ");
+                String columnValue = resultSet.getString(i);
+                System.out.print(columnValue);
+                counter += 1;
+            }
+            System.out.println("");
+        }
+        System.out.println("");
+
+    }
+
 
     public String getResult(ResultSet resultSet) throws SQLException {
         ResultSetMetaData rsmd = resultSet.getMetaData(); // metadane o zapytaniu

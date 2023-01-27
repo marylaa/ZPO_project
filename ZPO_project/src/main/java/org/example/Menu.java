@@ -15,6 +15,7 @@ public class Menu {
     private static DatabaseContext onlineShop;
     private static Seller seller;
     private static Buyer buyer;
+    private static Cart cart;
 
     public Menu() {
         this.onlineShop = new DatabaseContext(Connect.makeConnection());
@@ -38,6 +39,7 @@ public class Menu {
                     break;
                 case "2":
                     //HISTORIA ZAMOWIEN
+                    cart.checkOrdersHistory(userId);
                     break;
                 case "3":
                     //KOSZYK
