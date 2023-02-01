@@ -208,12 +208,20 @@ public class Cart {
     }
 
     public void showCart() {
+
+
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
+
+        if(s.isEmpty()){
+            System.out.println("Koszyk jest pusty.");
+        }
 
         for (Map.Entry<Products, Integer> it : s) {
             Products productName = it.getKey();
             Integer number = it.getValue();
+            System.out.println(productName);
             System.out.println("Produkt: " + productName.getName() + ", liczba: " + number);
+
         }
     }
 
@@ -224,35 +232,90 @@ public class Cart {
      * @param clientId - ID klienta
      *
      */
-    public String checkOrdersHistory(int clientId){
+//    public String checkOrdersHistory(int clientId){
+//
+//
+//        try {
+//            Connect connect = new Connect();
+//
+//            System.out.println("Imię i nazwisko klienta:");
+//            PreparedStatement selectAllSt2 = connection.prepareStatement("select first_name, last_name from users where id=" + clientId + ";");
+//            ResultSet client = selectAllSt2.executeQuery();
+//            //client.next();
+//            printResultSet(client);
+//
+//
+//
+//
+//            PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, order_value from order_details where client_id='" + clientId + "';");
+//            ResultSet orderDetails = selectAllSt.executeQuery();
+//            boolean notEmpty = orderDetails.next();
+//
+//            if(notEmpty){
+//
+//            }else{
+//                System.out.println("Brak zamówień.");
+//            }
+//
+//            while(orderDetails.next()) {
+//                //orderDetails.next();
+//                int orderId = orderDetails.getInt(1);
+//                //printResultSet(orderDetails);
+//                String date = orderDetails.getString(2);
+//                String value1 = orderDetails.getString(3);
+//
+//                System.out.println("Szczegóły zamówienia:");
+//                System.out.println("id zamówienia, data utworzenia, wartość zamówienia [zł]");
+//                System.out.println(orderId + " " + date + " " + value1);
+//
+//                System.out.println("Zamówione produkty : ");
+//                PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, order_id, quantity, items_value from order_items where order_id='" + orderId + "';");
+//                ResultSet orderedItems = selectAllSt1.executeQuery();
+//
+//                while(orderedItems.next()) {
+//
+//                    String productsId = orderedItems.getString(1);
+//                    int quantity = orderedItems.getInt(3);
+//                    double value = orderedItems.getInt(4);
+//
+//                    System.out.println(value + " zł");
+//                    System.out.println(quantity + " szt.");
+//
+//                    PreparedStatement selectAllSt5 = connection.prepareStatement("select name from products where id='" + productsId + "';");
+//                    ResultSet name = selectAllSt5.executeQuery();
+//                    //name.next();
+//                    printResultSet(name);
+//                }
+//
+//            }
+//
+//
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        } catch (NullPointerException e) {
+//            System.out.println("Brak zamówień");
+//        }
+//
+//        return "done";
+//
+//    }
 
-
+    public void checkOrdersHistory(int clientId){
         try {
-            Connect connect = new Connect();
-
-            System.out.println("Imię i nazwisko klienta:");
-            PreparedStatement selectAllSt2 = connection.prepareStatement("select first_name, last_name from users where id=" + clientId + ";");
+            System.out.println("\nHistoria zamówień klienta:");
+            PreparedStatement selectAllSt2 = connection.prepareStatement("select concat(first_name, ' ', last_name) from users where id=" + clientId + ";");
             ResultSet client = selectAllSt2.executeQuery();
-            //client.next();
             printResultSet(client);
-
-
-
 
             PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, order_value from order_details where client_id='" + clientId + "';");
             ResultSet orderDetails = selectAllSt.executeQuery();
             boolean notEmpty = orderDetails.next();
 
-            if(notEmpty){
-
-            }else{
-                System.out.println("Brak zamówień.");
+            if(!notEmpty){
+                System.out.println("Pusta historia zamówień.");
             }
-
             while(orderDetails.next()) {
-                //orderDetails.next();
                 int orderId = orderDetails.getInt(1);
-                //printResultSet(orderDetails);
                 String date = orderDetails.getString(2);
                 String value1 = orderDetails.getString(3);
 
@@ -260,7 +323,7 @@ public class Cart {
                 System.out.println("id zamówienia, data utworzenia, wartość zamówienia [zł]");
                 System.out.println(orderId + " " + date + " " + value1);
 
-                System.out.println("Zamówione produkty : ");
+                System.out.println("Zamówione produkty: ");
                 PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, order_id, quantity, items_value from order_items where order_id='" + orderId + "';");
                 ResultSet orderedItems = selectAllSt1.executeQuery();
 
@@ -275,21 +338,12 @@ public class Cart {
 
                     PreparedStatement selectAllSt5 = connection.prepareStatement("select name from products where id='" + productsId + "';");
                     ResultSet name = selectAllSt5.executeQuery();
-                    //name.next();
                     printResultSet(name);
                 }
-
             }
-
-
         } catch (SQLException e) {
             throw new RuntimeException(e);
-        } catch (NullPointerException e) {
-            System.out.println("Brak zamówień");
         }
-
-        return "done";
-
     }
 
     /**
