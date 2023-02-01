@@ -31,7 +31,7 @@ public class Menu {
 
         if ("buyer".equals(userType)) {
             Cart cart = new Cart(userId);
-            Buyer buyer = new Buyer(cart);
+            this.buyer = new Buyer(cart);
 
             String action = getInput("Co chcesz zrobić? \n1 - wyświetlić listę kategorii \n2 - sprawdzić historię zamówień \n3 - sprawdzić zawartość koszyka \n4 - wylogować");
             while (!"1".equals(action) && !"2".equals(action) && !"3".equals(action) && !"4".equals(action)) {
@@ -47,7 +47,7 @@ public class Menu {
                     startMenu();
                     break;
                 case "3":
-                    cart.showCart();
+                    cart.showCart(userId);
                     startMenu();
                     break;
                 case "4":

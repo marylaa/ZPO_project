@@ -4,9 +4,6 @@ import com.mysql.cj.exceptions.WrongArgumentException;
 
 import java.sql.*;
 
-import static org.example.Cart.printResultSet;
-import static org.example.Cart.returnResultSet;
-
 public class Products {
     /**
      * Klasa reprezentująca produkt.
