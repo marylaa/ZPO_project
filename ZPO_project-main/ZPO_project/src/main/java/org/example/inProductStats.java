@@ -3,6 +3,10 @@ package org.example;
 import java.sql.*;
 
 public class inProductStats {
+    /**
+     * Klasa odpowiadająca za statystyki produkt.
+     *
+     */
 
     private Connection connection;
 
@@ -10,9 +14,14 @@ public class inProductStats {
         connection = conn;
     }
 
+
+    /**
+     * Metoda dodajaca produkt do tabeli product_stats w bazie danych
+     *
+     * @param productId - ID produktu
+     *
+     */
     public String addToProductStats(String productId){
-
-
 
         try {
 
@@ -24,8 +33,6 @@ public class inProductStats {
             PreparedStatement selectAllSt1 = connection.prepareStatement("select id from product_stats where product_id='" + productId + "';");
             ResultSet rs1 = selectAllSt1.executeQuery();
             if (rs1.next()) {
-                System.out.println("tu");
-
                 return "exist";
 
             }
