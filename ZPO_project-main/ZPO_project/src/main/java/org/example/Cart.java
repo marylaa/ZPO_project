@@ -1,5 +1,6 @@
 package org.example;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +12,9 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 
 public class Cart {
+    /**
+     * Klasa reprezentująca koszyk.
+     */
 
     private Connection connection;
 
@@ -19,8 +23,13 @@ public class Cart {
     private int clientId;
     private Map<Products, Integer> cartProducts = new HashMap<Products, Integer>();
 
-
-
+    /**
+     * Metoda tworząca koszyk.
+     *
+     * @param conn - połączenie z bazą
+     * @param clientId - ID klienta
+     *
+     */
     public Cart(Connection conn, int clientId) {
         connection = conn;
         try {
@@ -64,7 +73,13 @@ public class Cart {
 
 
 
-
+    /**
+     * Metoda dodająca produkt do koszyka.
+     *
+     * @param productName - nazwa produktu
+     * @param number - liczba produktu
+     *
+     */
     public String addProduct(String productName, int number) {
         Connect connect = new Connect();
 
@@ -104,6 +119,13 @@ public class Cart {
 
     }
 
+    /**
+     * Metoda usuwająca liczbę produktów w koszyku.
+     *
+     * @param productName - nazwa produktu
+     * @param toDelete - liczba produktów do usunięcia
+     *
+     */
     public String changeProductValueLess(String productName, int toDelete) {
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
 
@@ -118,7 +140,7 @@ public class Cart {
 
                 }
             }else{
-                return "niewlasciwa";
+                System.out.println("Niewłaściwa liczba");
             }
 
         }
@@ -126,6 +148,13 @@ public class Cart {
         return "done";
     }
 
+    /**
+     * Metoda dodająca liczbę produktów w koszyku.
+     *
+     * @param productName - nazwa produktu
+     * @param toAdd - liczba produktów do dodania
+     *
+     */
     public String changeProductValueMore(String productName, int toAdd) {
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
         Connect connect = new Connect();
@@ -151,6 +180,12 @@ public class Cart {
     }
 
 
+    /**
+     * Metoda usuwajaca jedną liczbę produktu.
+     *
+     * @param productName - produkt którego chcemy usunąć 1 liczbę
+     *
+     */
     public String deleteOneProduct(String productName) {
 
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
@@ -184,7 +219,13 @@ public class Cart {
     }
 
 
-    public void checkOrdersHistory(int clientId) {
+    /**
+     * Metoda sprawdzająca historię zamówień.
+     *
+     * @param clientId - ID klienta
+     *
+     */
+    public String checkOrdersHistory(int clientId){
 
 
         try {
@@ -201,6 +242,13 @@ public class Cart {
 
             PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, order_value from order_details where client_id='" + clientId + "';");
             ResultSet orderDetails = selectAllSt.executeQuery();
+            boolean notEmpty = orderDetails.next();
+
+            if(notEmpty){
+
+            }else{
+                System.out.println("Brak zamówień.");
+            }
 
             while(orderDetails.next()) {
                 //orderDetails.next();
@@ -237,11 +285,20 @@ public class Cart {
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        } catch (NullPointerException e) {
+            System.out.println("Brak zamówień");
         }
+
+        return "done";
 
     }
 
-    //potrzebujhe do funkcji dodac indeks uzytkownika!!!!!
+    /**
+     * Metoda zapisująca koszyk.
+     *
+     * @param clientId - ID klienta
+     *
+     */
     public ImmutableTriple<String, Double, String> saveCart(int clientId) {
 
 
@@ -335,7 +392,12 @@ public class Cart {
 
     }
 
-//    //potrzebujhe do funkcji dodac indeks uzytkownika!!!!!
+    /**
+     * Metoda powodująca kupienie zawartości koszyka.
+     *
+     * @param clientId - ID klienta
+     *
+     */
     public String buyCart(int clientId) {
 
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
@@ -367,7 +429,6 @@ public class Cart {
                 if(rs1.next()) {
 
                     int productStatsId = rs1.getInt(1);
-                    System.out.println(productStatsId);
 
                     PreparedStatement selectAllSt2 = connection.prepareStatement("select purchased_quantity from product_stats where product_id='" + productStatsId + "';");
                     ResultSet rs2 = selectAllSt2.executeQuery();
@@ -375,50 +436,43 @@ public class Cart {
                         int quantity = rs2.getInt(1);
                         String sql9 = "update product_stats set purchased_quantity=" + quantity + "+" + number + " where id='" + productStatsId + "';";
                         stmt.executeUpdate(sql9);
-                        return "done";
+                    }else {
+                        int quantity = 0;
+
+                        String sql9 = "update product_stats set purchased_quantity=" + quantity + "+" + number + " where id='" + productStatsId + "';";
+                        stmt.executeUpdate(sql9);
                     }
-                    int quantity = 0;
-
-                    String sql9 = "update product_stats set purchased_quantity=" + quantity + "+" + number + " where id='" + productStatsId + "';";
-                    stmt.executeUpdate(sql9);
-                    return "done";
 
                 }
 
 
-                PreparedStatement selectAllSt3 = connection.prepareStatement("select id from order_details order by id desc;");
+                PreparedStatement selectAllSt3 = connection.prepareStatement("select id from order_details order by id desc limit 1;");
                 ResultSet orderTempId = selectAllSt3.executeQuery();
-                orderTempId.next();
-                String orderId = orderTempId.getString(1);
+                while(orderTempId.next()) {
+                    String orderId = orderTempId.getString(1);
 
 
-                double itemsValue = number * product.getPrice();
+                    double itemsValue = number * product.getPrice();
 
 
-                String sql1 = "INSERT INTO order_items(product_id, order_id, quantity, items_value) VALUES('" + product.getId() + "','" + orderId + "'," + number + "," + itemsValue + ");";
-                stmt.executeUpdate(sql1);
+                    String sql1 = "INSERT INTO order_items(product_id, order_id, quantity, items_value) VALUES('" + product.getId() + "','" + orderId + "'," + number + "," + itemsValue + ");";
+                    stmt.executeUpdate(sql1);
 
-                PreparedStatement selectAllSt6 = connection.prepareStatement("select id from carts where client_id='" + clientId + "';");
-                ResultSet cartId = selectAllSt6.executeQuery();
-                while(cartId.next()) {
-                    int cart = cartId.getInt(1);
+                    PreparedStatement selectAllSt6 = connection.prepareStatement("select id from carts where client_id='" + clientId + "';");
+                    ResultSet cartId = selectAllSt6.executeQuery();
+                    while (cartId.next()) {
+                        int cart = cartId.getInt(1);
 
-                    String sql7 = "delete from cart_items where cart_id=" + cart + ";";
-                    stmt.executeUpdate(sql7);
+                        String sql7 = "delete from cart_items where cart_id=" + cart + ";";
+                        stmt.executeUpdate(sql7);
+                    }
+
+                    String sql5 = "delete from carts where client_id='" + clientId + "';";
+                    stmt.executeUpdate(sql5);
+
+                    String sql8 = "update products set availability=availability-" + number + " where id='" + product.getId() + "';";
+                    stmt.executeUpdate(sql8);
                 }
-
-                String sql5 = "delete from carts where client_id='" + clientId + "';";
-                stmt.executeUpdate(sql5);
-
-                String sql8 = "update products set availability=availability-" + number + " where id='" + product.getId() + "';";
-                stmt.executeUpdate(sql8);
-
-
-
-
-
-
-
 
             }
 
@@ -429,6 +483,12 @@ public class Cart {
         return "done";
     }
 
+    /**
+     * Metoda drukująca dane wynikowe z bazy danych.
+     *
+     * @param resultSet - zapytanie do bazy danych
+     *
+     */
     public static void printResultSet(ResultSet resultSet) throws SQLException {
         ResultSetMetaData rsmd = resultSet.getMetaData();
         int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
@@ -445,6 +505,12 @@ public class Cart {
 
     }
 
+    /**
+     * Metoda zwracająca dane wynikowe z bazy danych.
+     *
+     * @param resultSet - zapytanie do bazy danych
+     *
+     */
     public static String returnResultSet(ResultSet resultSet) throws SQLException {
         ResultSetMetaData rsmd = resultSet.getMetaData();
         int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
