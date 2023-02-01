@@ -1,16 +1,18 @@
 package org.example;
 
+import com.mysql.cj.exceptions.WrongArgumentException;
+
 import java.sql.*;
 
 import static org.example.Cart.printResultSet;
 import static org.example.Cart.returnResultSet;
 
 public class Products {
+    /**
+     * Klasa reprezentująca produkt.
+     */
     private Connection connection;
 
-//    public Products(Connection conn) {
-//        connection = conn;
-//    }
 
 
     private String id;
@@ -25,7 +27,13 @@ public class Products {
 
 
 
-
+    /**
+     * Metoda pobierająca informacje na temat produktu z bazy danych.
+     *
+     * @param conn - połączenie z bazą danych
+     * @param productName - nazwa produktu
+     *
+     */
     public Products(Connection conn,String productName){
         connection = conn;
         try {
@@ -35,16 +43,19 @@ public class Products {
 
             PreparedStatement selectAllSt = connection.prepareStatement("select id, category_id, producer, description, price, added_date, user_id, availability from products where name='" + productName + "';");
             ResultSet rs = selectAllSt.executeQuery();
-            rs.next();
-            id = rs.getString(1);
-            categoryId = rs.getString(2);
-            producer = rs.getString(3);
-            description = rs.getString(4);
-            price = rs.getInt(5);
-            addedDate  = rs.getDate(6);
-            userId = rs.getString(7);
-            availability = rs.getInt(8);
-            name = productName;
+
+            while(rs.next()) {
+                id = rs.getString(1);
+                categoryId = rs.getString(2);
+                producer = rs.getString(3);
+                description = rs.getString(4);
+                price = rs.getInt(5);
+                addedDate = rs.getDate(6);
+                userId = rs.getString(7);
+                availability = rs.getInt(8);
+                name = productName;
+            }
+
 
 
 
@@ -52,10 +63,21 @@ public class Products {
 
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new WrongArgumentException("brak");
         }
 
     }
+
+    /**
+     * Metoda sprawdzająca dostepność produktu.
+     *
+     */
+    public int checkAvailability(){
+
+        int availability = getAvailability();
+        return availability;
+    }
+
 
 
 
