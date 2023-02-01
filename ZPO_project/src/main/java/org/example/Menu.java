@@ -7,6 +7,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Menu {
@@ -17,11 +18,11 @@ public class Menu {
     private static Buyer buyer;
     private static Cart cart;
 
-    public Menu() {
+    public Menu() throws SQLException, ClassNotFoundException {
         this.onlineShop = new DatabaseContext(Connect.makeConnection());
     }
 
-    public void startMenu() {
+    public void startMenu() throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
         if (userId == 0) {
             System.out.println("\nSklep internetowy");
             login();
@@ -77,24 +78,24 @@ public class Menu {
         return scanner.nextLine();
     }
 
-    public void login() {
+    public void login() throws SQLException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException {
         this.buyer = new Buyer();
         this.seller = new Seller();
 
         String userLogin = getInput("Podaj login");
         String userPassword = getInput("Podaj hasło");
-        String[] data = onlineShop.getUserIdAndPasswordAndSalt(userLogin);
+        String[] data = onlineShop.getUserInfo(userLogin);
         while (data[0] == null) {
             System.out.println("\nNie znaleziono użytkownika o podanym loginie. Spróbuj ponownie.");
             userLogin = getInput("Podaj login");
             userPassword = getInput("Podaj hasło");
-            data = onlineShop.getUserIdAndPasswordAndSalt(userLogin);
+            data = onlineShop.getUserInfo(userLogin);
         }
 
         String hashedPassword = hashPassword(userPassword, data[2]);
         if (data[1].equals(hashedPassword)) {
             this.userId = Integer.valueOf(data[0]);
-            this.userType = onlineShop.getUserType(userId);
+            this.userType = String.valueOf(data[3]);
             System.out.println("\nPoprawnie zalogowano.");
         } else {
             System.out.println("\nLogowanie nie powiodło się. Spróbuj ponownie.");
@@ -102,31 +103,22 @@ public class Menu {
         }
     }
 
-    public static String hashPassword(String password, String salt) {
-        //https://medium.com/@kasunpdh/how-to-store-passwords-securely-with-pbkdf2-204487f14e84
+    public static String hashPassword(String password, String salt) throws NoSuchAlgorithmException, InvalidKeySpecException {
         int iterations = 10000;
         int keyLength = 512;
         char[] passwordChars = password.toCharArray();
         byte[] saltBytes = salt.getBytes();
 
-        try {
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
-            PBEKeySpec spec = new PBEKeySpec(passwordChars, saltBytes, iterations, keyLength);
-            SecretKey key = skf.generateSecret(spec);
-            byte[] hashedBytes = key.getEncoded();
-            String hashedString = Hex.encodeHexString(hashedBytes);
-            return hashedString;
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new RuntimeException(e);
-        }
+        SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
+        PBEKeySpec spec = new PBEKeySpec(passwordChars, saltBytes, iterations, keyLength);
+        SecretKey key = skf.generateSecret(spec);
+        byte[] hashedBytes = key.getEncoded();
+        String hashedString = Hex.encodeHexString(hashedBytes);
+        return hashedString;
     }
 
-    public void logout() {
+    public void logout() throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
         String action = getInput("Czy na pewno chcesz się wylogować? (tak/nie)");
-        while (!"tak".equals(action) && !"nie".equals(action)) {
-            System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
-            action = getInput("Czy na pewno chcesz się wylogować? (tak/nie)");
-        }
         switch (action) {
             case "tak":
                 this.userId = 0;
@@ -136,6 +128,9 @@ public class Menu {
             case "nie":
                 startMenu();
                 break;
+            default:
+                System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
+                logout();
         }
     }
 }

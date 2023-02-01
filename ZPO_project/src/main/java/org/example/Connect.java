@@ -4,13 +4,8 @@ import java.sql.*;
 
 public class Connect {
 
-    public static Connection makeConnection() {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
+    public static Connection makeConnection() throws ClassNotFoundException, SQLException {
+        Class.forName("com.mysql.cj.jdbc.Driver");
         StringBuilder urlSB = new StringBuilder("jdbc:mysql://"); //polaczenie z MySQL
         urlSB.append("localhost:3306/"); // numer portu
         urlSB.append("online_shop?"); // nazwa bazy
@@ -20,13 +15,7 @@ public class Connect {
         urlSB.append("&serverTimezone=CET"); // strefa czasowa
         String connectionUrl = urlSB.toString();
 
-        try {
-            Connection conn = DriverManager.getConnection(connectionUrl); //połączenie z bazą
-            return conn;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return DriverManager.getConnection(connectionUrl); //połączenie z bazą
     }
 }
 

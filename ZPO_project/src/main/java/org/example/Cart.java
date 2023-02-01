@@ -8,7 +8,7 @@ import java.sql.SQLException;
 public class Cart {
     private Connection connection;
 
-    public void checkOrdersHistory(int clientId) {
+    public void checkOrdersHistory(int clientId) throws ClassNotFoundException {
         try {
             DatabaseContext onlineShop = new DatabaseContext(Connect.makeConnection());
 

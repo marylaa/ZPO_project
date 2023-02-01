@@ -1,5 +1,7 @@
 package org.example;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -8,50 +10,42 @@ public class Buyer {
     private DatabaseContext onlineShop;
     private Menu menu;
 
-    public Buyer() {
+    public Buyer() throws SQLException, ClassNotFoundException {
         this.onlineShop = new DatabaseContext(Connect.makeConnection());
         this.menu = new Menu();
     }
 
-    public void printCategories() {
-        try {
-            onlineShop.printResultSet(onlineShop.getAllCategories(), "\nLista dostępnych kategorii:");
+    public void printCategories() throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
+        onlineShop.printResultSet(onlineShop.getAllCategories(), "\nLista dostępnych kategorii:");
 
-            String action = menu.getInput("Co chcesz zrobić? \n1 - wyświetlić produkty z danej kategorii \n2 - wrócić do menu");
-            while (!"1".equals(action) && !"2".equals(action)) {
-                System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
-                action = menu.getInput("\nPodaj numer");
-            }
-            switch (action) {
-                case "1":
-                    String categoryName = menu.getInput("Wybierz kategorię");
-                    String categoryId = onlineShop.getCategoryId(categoryName);
-                    while (categoryId == null) {
-                        System.out.println("Niepoprawna nazwa kategorii. Spróbuj ponownie.");
-                        categoryName = menu.getInput("Wybierz kategorię");
-                        categoryId = onlineShop.getCategoryId(categoryName);
-                    }
-                    printProductsFromCategory(categoryId);
-                    break;
-                case "2":
-                    menu.startMenu();
-                    break;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        String action = menu.getInput("Co chcesz zrobić? \n1 - wyświetlić produkty z danej kategorii \n2 - wrócić do menu");
+        while (!"1".equals(action) && !"2".equals(action)) {
+            System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
+            action = menu.getInput("\nPodaj numer");
+        }
+        switch (action) {
+            case "1":
+                String categoryName = menu.getInput("Wybierz kategorię");
+                String categoryId = onlineShop.getCategoryId(categoryName);
+                while (categoryId == null) {
+                    System.out.println("Niepoprawna nazwa kategorii. Spróbuj ponownie.");
+                    categoryName = menu.getInput("Wybierz kategorię");
+                    categoryId = onlineShop.getCategoryId(categoryName);
+                }
+                printProductsFromCategory(categoryId);
+                break;
+            case "2":
+                menu.startMenu();
+                break;
         }
     }
 
-    public void printProductsFromCategory(String categoryId) {
-        try {
-            onlineShop.printResultSet(onlineShop.getAllProducts(categoryId), "\nProdukty z wybranej kategorii:");
-            productsOperations(categoryId);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    public void printProductsFromCategory(String categoryId) throws ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException, SQLException {
+        onlineShop.printResultSet(onlineShop.getAllProducts(categoryId), "\nProdukty z wybranej kategorii:");
+        productsOperations(categoryId);
     }
 
-    public void productsOperations(String categoryId){
+    public void productsOperations(String categoryId) throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
         String action = menu.getInput("Co chcesz zrobić? \n1 - wyświetlić informacje o danym produkcie \n2 - posortować produkty \n3 - wrócić do wyboru kategorii \n4 - wrócić do menu");
         while (!"1".equals(action) && !"2".equals(action) && !"3".equals(action) && !"4".equals(action)) {
             System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
@@ -80,7 +74,7 @@ public class Buyer {
         }
     }
 
-    public void sortProducts(String categoryId) {
+    public void sortProducts(String categoryId) throws SQLException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException {
         String action = menu.getInput("Po czym chcesz posortować? \n1 - po cenie produktu \n2 - po dacie dodania produktu \n3 - po ocenie produktu \n4 - wrócić do wyboru kategorii \n5 - wrócić do menu");
         while (!"1".equals(action) && !"2".equals(action) && !"3".equals(action) && !"4".equals(action) && !"5".equals(action)) {
             System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
@@ -123,41 +117,40 @@ public class Buyer {
         return null;
     }
 
-    public void printProductInfo(String productId, String categoryId) {
-        try {
-            printProductDescription(onlineShop.getProductInfo(productId), "\nOpis wybranego produktu:");
+    public void printProductInfo(String productId, String categoryId) throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
+        printProductDescription(onlineShop.getProductInfo(productId), "\nOpis wybranego produktu:");
+        afterProductInfoOperations(productId, categoryId);
+    }
 
-            String action = menu.getInput("Co chcesz zrobić? \n1 - kupić produkt \n2 - przeczytać opinie \n3 - dodać opinie \n4 - sprawdzić ilość sprzedanych sztuk \n5 - wrócić do wyboru produktu \n6 - wrócić do menu");
-            while (!"1".equals(action) && !"2".equals(action) && !"3".equals(action) && !"4".equals(action) && !"5".equals(action) && !"6".equals(action)) {
-                System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
-                action = menu.getInput("\nPodaj numer");
-            }
-            switch (action) {
-                case "1":
-                    //KUPNO PRODUKTU
+    private void afterProductInfoOperations(String productId, String categoryId) throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
+        String action = menu.getInput("Co chcesz zrobić? \n1 - kupić produkt \n2 - przeczytać opinie \n3 - dodać opinie \n4 - sprawdzić ilość sprzedanych sztuk \n5 - wrócić do wyboru produktu \n6 - wrócić do menu");
+        while (!"1".equals(action) && !"2".equals(action) && !"3".equals(action) && !"4".equals(action) && !"5".equals(action) && !"6".equals(action)) {
+            System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
+            action = menu.getInput("\nPodaj numer");
+        }
+        switch (action) {
+            case "1":
+                //KUPNO PRODUKTU
 
-                    //pozniej wyswietlenie kategorii
-                    printCategories();
-                    break;
-                case "2":
-                    //CZYTANIE OPINII
-                    break;
-                case "3":
-                    //DODANIE OPINII
-                    break;
-                case "4":
-                    System.out.println("\nIlość sprzedanych sztuk: " + onlineShop.checkPurchasedQuantityOfProduct(productId));
-                    printProductInfo(productId, categoryId);
-                    break;
-                case "5":
-                    printProductsFromCategory(categoryId);
-                    break;
-                case "6":
-                    menu.startMenu();
-                    break;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+                //pozniej wyswietlenie kategorii
+                printCategories();
+                break;
+            case "2":
+                //CZYTANIE OPINII
+                break;
+            case "3":
+                //DODANIE OPINII
+                break;
+            case "4":
+                System.out.println("\nIlość sprzedanych sztuk: " + onlineShop.checkPurchasedQuantityOfProduct(productId));
+                afterProductInfoOperations(productId, categoryId);
+                break;
+            case "5":
+                printProductsFromCategory(categoryId);
+                break;
+            case "6":
+                menu.startMenu();
+                break;
         }
     }
 
