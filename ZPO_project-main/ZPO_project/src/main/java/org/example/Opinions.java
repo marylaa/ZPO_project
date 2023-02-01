@@ -5,6 +5,10 @@ import java.sql.*;
 import static org.example.Cart.printResultSet;
 
 public class Opinions {
+    /**
+     * Klasa reprezentująca opinie.
+     *
+     */
 
     private Connection connection;
 
@@ -12,6 +16,15 @@ public class Opinions {
         connection = conn;
     }
 
+    /**
+     * Metoda dodająca opinię o produkcie.
+     *
+     * @param  clientId - ID klienta
+     * @param productName - nazwa produktu
+     * @param rating - ocena
+     * @param text - treść opinii
+     *
+     */
     public String addOpinion(int clientId,String productName, String text,double rating){
 
 
@@ -26,7 +39,7 @@ public class Opinions {
 
             if(rs.next()){
                 String userType = rs.getString(1);
-                if(("client").equals(userType)){
+                if(("buyer").equals(userType)){
 
                     Products products = new Products(connect.makeConnection(),productName);
                     inProductStats stats = new inProductStats(connect.makeConnection());
@@ -82,6 +95,12 @@ public class Opinions {
         return "done";
     }
 
+
+    /**
+     * Metoda drukująca opinie o produkcie.
+     *
+     * @param productName - nazwa produktu
+     */
     public String showOpinions(String productName){
 
 
@@ -110,6 +129,13 @@ public class Opinions {
 
 
     }
+
+    /**
+     * Metoda drukująca ponumerowane dane wynikowe z bazy danych.
+     *
+     * @param resultSet - zapytanie do bazy danych
+     *
+     */
     public static void printResultSetEnumerate(ResultSet resultSet) throws SQLException {
         ResultSetMetaData rsmd = resultSet.getMetaData();
         int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
