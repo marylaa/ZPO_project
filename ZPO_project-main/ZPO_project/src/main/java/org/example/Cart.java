@@ -232,119 +232,145 @@ public class Cart {
      * @param clientId - ID klienta
      *
      */
-//    public String checkOrdersHistory(int clientId){
-//
-//
-//        try {
-//            Connect connect = new Connect();
-//
-//            System.out.println("Imię i nazwisko klienta:");
-//            PreparedStatement selectAllSt2 = connection.prepareStatement("select first_name, last_name from users where id=" + clientId + ";");
-//            ResultSet client = selectAllSt2.executeQuery();
-//            //client.next();
+    public String checkOrdersHistory(int clientId){
+
+
+        try {
+            Connect connect = new Connect();
+
+            int counter = 1;
+
+
+            System.out.println("HISTORIA ZAMÓWIEŃ");
+            System.out.println("----------------------------------------------------------------------------");
+
+            PreparedStatement selectAllSt2 = connection.prepareStatement("select first_name, last_name from users where id=" + clientId + ";");
+            ResultSet client = selectAllSt2.executeQuery();
+            while(client.next()){
+                String clientString = client.getString(1);
+                String clientString2 = client.getString(2);
+
+                System.out.printf("| %30s |%n","IMIĘ I NAZWISKO KLIENTA: " + clientString + " " + clientString2);
+
+            }
 //            printResultSet(client);
-//
-//
-//
+            System.out.println("----------------------------------------------------------------------------");
+
+
+
+
+            PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, order_value from order_details where client_id='" + clientId + "';",ResultSet.TYPE_SCROLL_SENSITIVE,
+                    ResultSet.CONCUR_UPDATABLE);
+            ResultSet orderDetails = selectAllSt.executeQuery();
+
+            if(orderDetails.next()) {
+
+                orderDetails.beforeFirst();
+                while (orderDetails.next()) {
+                    //orderDetails.next();
+                    int orderId = orderDetails.getInt(1);
+                    //printResultSet(orderDetails);
+                    String date = orderDetails.getString(2);
+                    String value1 = orderDetails.getString(3);
+
+                    System.out.printf( "| %10s |%n", "ZAMÓWIENIE NR " + counter);
+
+                    System.out.printf("| %4s | %19s | %10s |%n", "ID", "DATA UTWORZENIA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
+//                    System.out.println(orderId + " " + date + " " + value1);
+                    System.out.printf("| %4s | %10s | %23s |%n",orderId, date, value1);
+
+                    System.out.println(" ");
+                    System.out.printf( "| %16s |%n", "ZAMÓWIONE PRODUKTY");
+
+                    PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, order_id, quantity, items_value from order_items where order_id='" + orderId + "';");
+                    ResultSet orderedItems = selectAllSt1.executeQuery();
+
+                    while (orderedItems.next()) {
+
+                        String productsId = orderedItems.getString(1);
+                        int quantity = orderedItems.getInt(3);
+                        double value = orderedItems.getInt(4);
+
+
+                        PreparedStatement selectAllSt5 = connection.prepareStatement("select name from products where id='" + productsId + "';");
+                        ResultSet name = selectAllSt5.executeQuery();
+                        while(name.next()) {
+//                        printResultSet(name);
+                            String nameString = name.getString(1);
+
+                            System.out.printf("| %17s | %8s | %10s | %10s |%n", "PRODUKT", "ID PRODUKTU", "LICZBA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
+
+                            System.out.printf("| %17s | %11s | %10s | %23s |%n", nameString, productsId, quantity, value);
+
+                            System.out.println("\n----------------------------------------------------------------------------");
+
+
+                        }
+                        counter += 1;
+                    }
+
+                }
+            }else{
+                System.out.println("Brak zamówień");
+            }
+
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (NullPointerException e) {
+            System.out.println("Brak zamówień");
+        }
+
+        return "done";
+
+    }
+
+//    public void checkOrdersHistory(int clientId){
+//        try {
+//            System.out.println("\nHistoria zamówień klienta:");
+//            PreparedStatement selectAllSt2 = connection.prepareStatement("select concat(first_name, ' ', last_name) from users where id=" + clientId + ";");
+//            ResultSet client = selectAllSt2.executeQuery();
+//            printResultSet(client);
 //
 //            PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, order_value from order_details where client_id='" + clientId + "';");
 //            ResultSet orderDetails = selectAllSt.executeQuery();
 //            boolean notEmpty = orderDetails.next();
 //
-//            if(notEmpty){
+//            if(!notEmpty){
+//                System.out.println("Pusta historia zamówień.");
+//            }else {
+//                while (orderDetails.next()) {
+//                    int orderId = orderDetails.getInt(1);
+//                    String date = orderDetails.getString(2);
+//                    String value1 = orderDetails.getString(3);
 //
-//            }else{
-//                System.out.println("Brak zamówień.");
-//            }
+//                    System.out.println("Szczegóły zamówienia:");
+//                    System.out.println("id zamówienia, data utworzenia, wartość zamówienia [zł]");
+//                    System.out.println(orderId + " " + date + " " + value1);
 //
-//            while(orderDetails.next()) {
-//                //orderDetails.next();
-//                int orderId = orderDetails.getInt(1);
-//                //printResultSet(orderDetails);
-//                String date = orderDetails.getString(2);
-//                String value1 = orderDetails.getString(3);
+//                    System.out.println("Zamówione produkty: ");
+//                    PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, order_id, quantity, items_value from order_items where order_id='" + orderId + "';");
+//                    ResultSet orderedItems = selectAllSt1.executeQuery();
 //
-//                System.out.println("Szczegóły zamówienia:");
-//                System.out.println("id zamówienia, data utworzenia, wartość zamówienia [zł]");
-//                System.out.println(orderId + " " + date + " " + value1);
+//                    while (orderedItems.next()) {
 //
-//                System.out.println("Zamówione produkty : ");
-//                PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, order_id, quantity, items_value from order_items where order_id='" + orderId + "';");
-//                ResultSet orderedItems = selectAllSt1.executeQuery();
+//                        String productsId = orderedItems.getString(1);
+//                        int quantity = orderedItems.getInt(3);
+//                        double value = orderedItems.getInt(4);
 //
-//                while(orderedItems.next()) {
+//                        System.out.println(value + " zł");
+//                        System.out.println(quantity + " szt.");
 //
-//                    String productsId = orderedItems.getString(1);
-//                    int quantity = orderedItems.getInt(3);
-//                    double value = orderedItems.getInt(4);
-//
-//                    System.out.println(value + " zł");
-//                    System.out.println(quantity + " szt.");
-//
-//                    PreparedStatement selectAllSt5 = connection.prepareStatement("select name from products where id='" + productsId + "';");
-//                    ResultSet name = selectAllSt5.executeQuery();
-//                    //name.next();
-//                    printResultSet(name);
+//                        PreparedStatement selectAllSt5 = connection.prepareStatement("select name from products where id='" + productsId + "';");
+//                        ResultSet name = selectAllSt5.executeQuery();
+//                        printResultSet(name);
+//                    }
 //                }
-//
 //            }
-//
-//
 //        } catch (SQLException e) {
 //            throw new RuntimeException(e);
-//        } catch (NullPointerException e) {
-//            System.out.println("Brak zamówień");
 //        }
-//
-//        return "done";
-//
 //    }
-
-    public void checkOrdersHistory(int clientId){
-        try {
-            System.out.println("\nHistoria zamówień klienta:");
-            PreparedStatement selectAllSt2 = connection.prepareStatement("select concat(first_name, ' ', last_name) from users where id=" + clientId + ";");
-            ResultSet client = selectAllSt2.executeQuery();
-            printResultSet(client);
-
-            PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, order_value from order_details where client_id='" + clientId + "';");
-            ResultSet orderDetails = selectAllSt.executeQuery();
-            boolean notEmpty = orderDetails.next();
-
-            if(!notEmpty){
-                System.out.println("Pusta historia zamówień.");
-            }
-            while(orderDetails.next()) {
-                int orderId = orderDetails.getInt(1);
-                String date = orderDetails.getString(2);
-                String value1 = orderDetails.getString(3);
-
-                System.out.println("Szczegóły zamówienia:");
-                System.out.println("id zamówienia, data utworzenia, wartość zamówienia [zł]");
-                System.out.println(orderId + " " + date + " " + value1);
-
-                System.out.println("Zamówione produkty: ");
-                PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, order_id, quantity, items_value from order_items where order_id='" + orderId + "';");
-                ResultSet orderedItems = selectAllSt1.executeQuery();
-
-                while(orderedItems.next()) {
-
-                    String productsId = orderedItems.getString(1);
-                    int quantity = orderedItems.getInt(3);
-                    double value = orderedItems.getInt(4);
-
-                    System.out.println(value + " zł");
-                    System.out.println(quantity + " szt.");
-
-                    PreparedStatement selectAllSt5 = connection.prepareStatement("select name from products where id='" + productsId + "';");
-                    ResultSet name = selectAllSt5.executeQuery();
-                    printResultSet(name);
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     /**
      * Metoda zapisująca koszyk.
