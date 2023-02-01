@@ -1,6 +1,5 @@
 package org.example;
 
-import java.io.IOException;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -297,9 +296,8 @@ public class Cart {
      * Metoda zapisująca koszyk.
      *
      * @param clientId - ID klienta
-     *
      */
-    public ImmutableTriple<String, Double, String> saveCart(int clientId) {
+    public double saveCart(int clientId) {
 
 
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
@@ -384,10 +382,12 @@ public class Cart {
             throw new RuntimeException(e);
         }
 
-        ImmutableTriple<String, Double, String> immutableTriple =
-                new ImmutableTriple<>("done", cartValue, "rightValue");
+//        ImmutableTriple<String, Double, String> immutableTriple =
+//                new ImmutableTriple<>("done", cartValue, "rightValue");
+//
+//        return immutableTriple;
 
-        return immutableTriple;
+        return cartValue;
 
 
     }
@@ -402,8 +402,13 @@ public class Cart {
 
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
 
-        ImmutableTriple<String, Double, String> immutableTriple = saveCart(clientId);
-        double cartValue = immutableTriple.getMiddle();
+//        ImmutableTriple<String, Double, String> immutableTriple = saveCart(clientId);
+//        double cartValue = immutableTriple.getMiddle();
+
+
+        double cartValue = saveCart(clientId);
+
+
 
 
         try {
