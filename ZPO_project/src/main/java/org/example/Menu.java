@@ -47,8 +47,7 @@ public class Menu {
                     startMenu();
                     break;
                 case "3":
-                    cart.showCart();
-                    startMenu();
+                    cart.showCart(userId);
                     break;
                 case "4":
                     cart.wantToSaveCart(userId);
@@ -121,14 +120,14 @@ public class Menu {
     }
 
     public void logout() throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
-        String action = getInput("Czy na pewno chcesz się wylogować? (tak/nie)");
+        String action = getInput("Czy na pewno chcesz się wylogować? \n1 - tak \n2 - nie)");
         switch (action) {
-            case "tak":
+            case "1":
                 this.userId = 0;
                 this.userType = null;
                 startMenu();
                 break;
-            case "nie":
+            case "2":
                 startMenu();
                 break;
             default:
