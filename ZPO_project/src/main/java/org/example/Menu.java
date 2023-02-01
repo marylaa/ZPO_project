@@ -16,7 +16,6 @@ public class Menu {
     private static DatabaseContext onlineShop;
     private static Seller seller;
     private static Buyer buyer;
-    private static Cart cart;
 
     public Menu() throws SQLException, ClassNotFoundException {
         this.onlineShop = new DatabaseContext(Connect.makeConnection());
@@ -24,11 +23,16 @@ public class Menu {
 
     public void startMenu() throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
         if (userId == 0) {
-            System.out.println("\nSklep internetowy");
+            //https://www.asciiart.eu/food-and-drinks/coffee-and-tea
+            System.out.println("                          (   ) )\n             ;,'           ) ( (\n     _o_    ;:;'      .-'---------| \n ,-.'---`.__ ;       ( C|/\\/\\/\\/\\/|\n((j`=====',-'         '-./\\/\\/\\/\\/|\n `-\\     /              '_________'\n    `-=-'                '-------'");
+            System.out.println("Witamy w naszym sklepie internetowym");
             login();
         }
 
         if ("buyer".equals(userType)) {
+            Cart cart = new Cart(userId);
+            Buyer buyer = new Buyer(cart);
+
             String action = getInput("Co chcesz zrobić? \n1 - wyświetlić listę kategorii \n2 - sprawdzić historię zamówień \n3 - sprawdzić zawartość koszyka \n4 - wylogować");
             while (!"1".equals(action) && !"2".equals(action) && !"3".equals(action) && !"4".equals(action)) {
                 System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
@@ -39,18 +43,21 @@ public class Menu {
                     buyer.printCategories();
                     break;
                 case "2":
-                    //HISTORIA ZAMOWIEN
                     cart.checkOrdersHistory(userId);
+                    startMenu();
                     break;
                 case "3":
-                    //KOSZYK
+                    cart.showCart();
+                    startMenu();
                     break;
                 case "4":
-                    //pytanie czy zapisac koszyk
+                    cart.wantToSaveCart(userId);
                     logout();
                     break;
             }
         } else {
+            this.seller = new Seller();
+
             String action = getInput("Co chcesz zrobić? \n1 - wyświetlić listę swoich produktów \n2 - dodać nowe produkty \n3 - wylogować");
             while (!"1".equals(action) && !"2".equals(action) && !"3".equals(action)) {
                 System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
@@ -79,9 +86,6 @@ public class Menu {
     }
 
     public void login() throws SQLException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException {
-        this.buyer = new Buyer();
-        this.seller = new Seller();
-
         String userLogin = getInput("Podaj login");
         String userPassword = getInput("Podaj hasło");
         String[] data = onlineShop.getUserInfo(userLogin);

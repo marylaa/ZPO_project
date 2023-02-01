@@ -9,10 +9,12 @@ import java.sql.SQLException;
 public class Buyer {
     private DatabaseContext onlineShop;
     private Menu menu;
+    private Cart cart;
 
-    public Buyer() throws SQLException, ClassNotFoundException {
+    public Buyer(Cart cart) throws SQLException, ClassNotFoundException {
         this.onlineShop = new DatabaseContext(Connect.makeConnection());
         this.menu = new Menu();
+        this.cart = cart;
     }
 
     public void printCategories() throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
@@ -132,7 +134,7 @@ public class Buyer {
             case "1":
                 //KUPNO PRODUKTU
 
-                //pozniej wyswietlenie kategorii
+                cart.addProduct(productId);
                 printCategories();
                 break;
             case "2":

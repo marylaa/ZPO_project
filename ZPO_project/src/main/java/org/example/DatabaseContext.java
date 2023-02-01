@@ -66,10 +66,15 @@ public class DatabaseContext {
         return getResult(function.executeQuery());
     }
 
+    /**
+     * Metoda drukująca posortowane produkty.
+     *
+     * @param sortBy - parametr po którym następuje sortowanie
+     * @param categoryId - ID kategorii produktów
+     * @param direction - kierunek sortowania
+     *
+     */
     public void getSortedProducts(String sortBy, String direction, String categoryId) throws SQLException {
-        PreparedStatement function = connection.prepareStatement("select name," + sortBy + " from product_view where category_id = '" + categoryId + "' order by " + sortBy + " " + direction + " ;");
-        printResultSet(function.executeQuery(), "\nPosortowane produkty:");
-
         String sortByPl = " ";
         if (sortBy.equals("rating")) {
             sortByPl = "ocena";
@@ -78,6 +83,7 @@ public class DatabaseContext {
         } else if (sortBy.equals("price")) {
             sortByPl = "cena";
         }
+        PreparedStatement function = connection.prepareStatement("select name," + sortBy + " from product_view where category_id = '" + categoryId + "' order by " + sortBy + " " + direction + " ;");
         printResultSetSorting(function.executeQuery(), sortByPl);
     }
 
