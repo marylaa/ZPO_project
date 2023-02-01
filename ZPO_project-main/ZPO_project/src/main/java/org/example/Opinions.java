@@ -111,15 +111,22 @@ public class Opinions {
 
             Products products = new Products(connect.makeConnection(), productName);
 
-            System.out.println("Opinie o produkcie " + productName);
-            PreparedStatement selectAllSt = connection.prepareStatement("select description from opinions where product_id='" + products.getId() + "';");
-            ResultSet rs = selectAllSt.executeQuery();
-            printResultSetEnumerate(rs);
 
-            PreparedStatement selectAllSt1 = connection.prepareStatement("select rating from opinions where product_id='" + products.getId() + "' limit 1;");
+
+            PreparedStatement selectAllSt1 = connection.prepareStatement("select rating, id from product_stats where product_id='" + products.getId() + "' limit 1;");
             ResultSet rs1 = selectAllSt1.executeQuery();
-            System.out.println("Ocena (skala 1 - 5):");
-            printResultSet(rs1);
+            while (rs1.next()) {
+                double rating = rs1.getDouble(1);
+                String productStatID = rs1.getString(2);
+                System.out.println("Ocena (skala 1 - 5):");
+                System.out.println(rating);
+
+                System.out.println("Opinie o produkcie " + productName);
+                PreparedStatement selectAllSt = connection.prepareStatement("select description from product_opinions where product_stat_id='" + productStatID + "';");
+                ResultSet rs = selectAllSt.executeQuery();
+                printResultSetEnumerate(rs);
+
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
