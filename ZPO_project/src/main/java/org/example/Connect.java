@@ -11,7 +11,7 @@ public class Connect {
         urlSB.append("online_shop?"); // nazwa bazy
         urlSB.append("useUnicode=true&characterEncoding=utf-8"); // kodowanie
         urlSB.append("&user=root"); // nazwa uzytkownika
-        urlSB.append("&password=aresik"); // haslo uzytkownika
+        urlSB.append("&password=haslo"); // haslo uzytkownika
         urlSB.append("&serverTimezone=CET"); // strefa czasowa
         String connectionUrl = urlSB.toString();
 

@@ -60,7 +60,8 @@ public class Seller {
         onlineShop.editProduct(productId, input);
     }
 
-    public void sellerAddProducts(int userId) throws SQLException {
+    public void sellerAddProducts(int userId) throws SQLException, ClassNotFoundException {
+        InProductStats inProductStats = new InProductStats();
         String id = menu.getInput("Podaj id produktu");
         String category = menu.getInput("Podaj id kategorii");
         String name = menu.getInput("Podaj nazwę produktu");
@@ -71,5 +72,7 @@ public class Seller {
         String availability = menu.getInput("Podaj dostępną liczbę sztuk");
         int availabilityInteger = Integer.valueOf(availability);
         onlineShop.addProduct(id, category, name, producer, description, priceDouble, userId, availabilityInteger);
+
+        inProductStats.addToProductStats(id);
     }
 }

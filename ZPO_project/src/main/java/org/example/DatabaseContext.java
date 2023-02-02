@@ -97,7 +97,7 @@ public class DatabaseContext {
         ResultSetMetaData rsmd = resultSet.getMetaData();
         int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
         int counter = 1;
-        System.out.println("");
+        System.out.println("\nPosotowane produkty:");
         while (resultSet.next()) {
             for (int i = 1; i <= columnsNumber; i++) {
                 if (i > 1)

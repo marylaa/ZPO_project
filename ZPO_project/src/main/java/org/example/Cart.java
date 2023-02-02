@@ -15,7 +15,7 @@ public class Cart {
      */
     private Connection connection;
     private DatabaseContext onlineShop;
-    private static Map<Products, Integer> cartProducts = new HashMap<Products, Integer>();
+    private static Map<Products, Integer> cartProducts = new HashMap<>();
 
     /**
      * Metoda tworząca koszyk.
@@ -155,7 +155,6 @@ public class Cart {
 
     public void clearCart() {
         cartProducts.clear();
-        System.out.println("\nTwój koszyk został wyczyszczony.");
     }
 
     public void showCart(int userId) throws SQLException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException {
@@ -196,6 +195,7 @@ public class Cart {
                 }
                 if ("tak".equals(result)) {
                     clearCart();
+                    System.out.println("\nTwój koszyk został wyczyszczony.");
                 }
                 menu.startMenu();
                 break;
@@ -249,24 +249,24 @@ public class Cart {
     public void checkOrdersHistory(int clientId) throws SQLException {
         int counter = 1;
 
-        System.out.println("\nHISTORIA ZAMÓWIEŃ");
-        System.out.println("----------------------------------------------------------------------------");
-
-        PreparedStatement selectAllSt2 = connection.prepareStatement("select first_name, last_name from orders_history where id=" + clientId + ";");
-        ResultSet client = selectAllSt2.executeQuery();
-        while (client.next()) {
-            String clientString = client.getString(1);
-            String clientString2 = client.getString(2);
-
-            System.out.printf("| %30s |%n", "IMIĘ I NAZWISKO KLIENTA: " + clientString + " " + clientString2);
-        }
-        System.out.println("----------------------------------------------------------------------------");
-
         PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, order_value from orders_history where client_id='" + clientId + "';", ResultSet.TYPE_SCROLL_SENSITIVE,
                 ResultSet.CONCUR_UPDATABLE);
         ResultSet orderDetails = selectAllSt.executeQuery();
 
         if (orderDetails.next()) {
+            System.out.println("\nHISTORIA ZAMÓWIEŃ");
+            System.out.println("----------------------------------------------------------------------------");
+
+            PreparedStatement selectAllSt2 = connection.prepareStatement("select first_name, last_name from orders_history where id=" + clientId + ";");
+            ResultSet client = selectAllSt2.executeQuery();
+            while (client.next()) {
+                String clientString = client.getString(1);
+                String clientString2 = client.getString(2);
+
+                System.out.printf("| %30s |%n", "IMIĘ I NAZWISKO KLIENTA: " + clientString + " " + clientString2);
+            }
+            System.out.println("----------------------------------------------------------------------------");
+
             orderDetails.beforeFirst();
             while (orderDetails.next()) {
                 int orderId = orderDetails.getInt(1);
@@ -291,15 +291,15 @@ public class Cart {
                     ResultSet name = selectAllSt5.executeQuery();
                     while (name.next()) {
                         String nameString = name.getString(1);
-                        System.out.printf("| %17s | %8s | %10s | %10s |%n", "PRODUKT", "ID PRODUKTU", "LICZBA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
-                        System.out.printf("| %17s | %11s | %10s | %23s |%n", nameString, productsId, quantity, value);
+                        System.out.printf("| %20s | %8s | %10s | %10s |%n", "PRODUKT", "ID PRODUKTU", "LICZBA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
+                        System.out.printf("| %20s | %11s | %10s | %23s |%n", nameString, productsId, quantity, value);
                         System.out.println("\n----------------------------------------------------------------------------");
                     }
                     counter += 1;
                 }
             }
         } else {
-            System.out.println("Brak zamówień");
+            System.out.println("\nBrak zamówień w historii.");
         }
     }
 
@@ -383,7 +383,7 @@ public class Cart {
      *
      * @param clientId - ID klienta
      */
-    public void buyCart(int clientId) throws ClassNotFoundException, SQLException {
+    public void buyCart(int clientId) throws SQLException {
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
 
         if (s.isEmpty()) {
@@ -393,7 +393,6 @@ public class Cart {
         double cartValue = saveCart(clientId);
 
         Statement stmt = connection.createStatement();
-        InProductStats stats = new InProductStats();
 
         String sql = "insert into order_details(client_id, created_date, order_value, status)" +
                 " values (" + clientId + ", current_timestamp()," + cartValue + ", 'created');";
@@ -402,8 +401,6 @@ public class Cart {
         for (Map.Entry<Products, Integer> it : s) {
             Products product = it.getKey();
             Integer number = it.getValue();
-
-            stats.addToProductStats(product.getId());
 
             PreparedStatement selectAllSt1 = connection.prepareStatement("select id from product_stats where product_id='" + product.getId() + "';");
             ResultSet rs1 = selectAllSt1.executeQuery();
@@ -449,6 +446,7 @@ public class Cart {
                 stmt.executeUpdate(sql8);
             }
         }
+        clearCart();
         System.out.println("\nPoprawnie złożono zamówienie. Aby zamówienie zostało zrealizowane prosimy dokonać płatności " + cartValue + " zł na wskazny numer bankowy: 0000111113333344444. Dziękujemy!");
     }
 }

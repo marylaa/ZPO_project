@@ -22,9 +22,6 @@ public class Opinions {
      */
     public void addOpinion(int clientId, String productId, String text, double rating) throws ClassNotFoundException, SQLException {
         Statement stmt = connection.createStatement();
-        InProductStats stats = new InProductStats();
-
-        stats.addToProductStats(productId);
 
         PreparedStatement selectAllSt1 = connection.prepareStatement("select id, rating from product_stats where product_id='" + productId + "';");
         ResultSet rs1 = selectAllSt1.executeQuery();
@@ -54,19 +51,21 @@ public class Opinions {
      * @param productId - nazwa produktu
      */
     public void showOpinions(String productId) throws SQLException {
-        PreparedStatement selectAllSt1 = connection.prepareStatement("select rating, id from product_stats where product_id='" + productId + "' limit 1;");
+        PreparedStatement selectAllSt1 = connection.prepareStatement("select rating, id from product_stats where product_id like '" + productId + "' limit 1;");
         ResultSet rs1 = selectAllSt1.executeQuery();
-        if (!rs1.next()) {
-            System.out.println("\nBrak opinii o danym produkcie.");
-        } else {
+        if (rs1.next()) {
             double rating = rs1.getDouble(1);
             String productStatID = rs1.getString(2);
-            System.out.println("\nOcena (skala 1 - 5): " + rating);
+            if (rating == 0.0) {
+                System.out.println("\nBrak opinii o danym produkcie.");
+            } else {
+                System.out.println("\nOcena (skala 1 - 5): " + rating);
 
-            System.out.println("\nOpinie o produkcie:");
-            PreparedStatement selectAllSt = connection.prepareStatement("select description from product_opinions where product_stat_id='" + productStatID + "';");
-            ResultSet rs = selectAllSt.executeQuery();
-            printResultSetEnumerate(rs);
+                System.out.println("\nOpinie o produkcie:");
+                PreparedStatement selectAllSt = connection.prepareStatement("select description from product_opinions where product_stat_id='" + productStatID + "';");
+                ResultSet rs = selectAllSt.executeQuery();
+                printResultSetEnumerate(rs);
+            }
         }
     }
 

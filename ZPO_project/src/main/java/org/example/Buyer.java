@@ -161,7 +161,7 @@ public class Buyer {
     private void addUserOpinion(String productId, Opinions opinions) throws ClassNotFoundException, SQLException {
         String opinionText = menu.getInput("Podaj treść:");
         double rating = -1.0;
-        while (rating < 0 || rating > 5) {
+        while (rating < 1 || rating > 5) {
             try {
                 rating = Double.valueOf(menu.getInput("Podaj ocenę w skali od 1 do 5:"));
             } catch (IllegalArgumentException e) {
