@@ -16,6 +16,7 @@ public class Menu {
     private static DatabaseContext onlineShop;
     private static Seller seller;
     private static Buyer buyer;
+    private static Cart cart;
 
     public Menu() throws SQLException, ClassNotFoundException {
         this.onlineShop = new DatabaseContext(Connect.makeConnection());
@@ -30,8 +31,6 @@ public class Menu {
         }
 
         if ("buyer".equals(userType)) {
-            Cart cart = new Cart(userId);
-            this.buyer = new Buyer(cart);
 
             String action = getInput("Co chcesz zrobić? \n1 - wyświetlić listę kategorii \n2 - sprawdzić historię zamówień \n3 - sprawdzić zawartość koszyka \n4 - wylogować");
             while (!"1".equals(action) && !"2".equals(action) && !"3".equals(action) && !"4".equals(action)) {
@@ -52,7 +51,7 @@ public class Menu {
                     break;
                 case "4":
                     cart.wantToSaveCart(userId);
-                    logout();
+                    logout(cart);
                     break;
             }
         } else {
@@ -72,7 +71,7 @@ public class Menu {
                     startMenu();
                     break;
                 case "3":
-                    logout();
+                    logout(null);
                     break;
             }
         }
@@ -85,7 +84,7 @@ public class Menu {
         return scanner.nextLine();
     }
 
-    public void login() throws SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public void login() throws SQLException, NoSuchAlgorithmException, InvalidKeySpecException, ClassNotFoundException {
         String userLogin = getInput("Podaj login");
         String userPassword = getInput("Podaj hasło");
         String[] data = onlineShop.getUserInfo(userLogin);
@@ -101,6 +100,11 @@ public class Menu {
             this.userId = Integer.valueOf(data[0]);
             this.userType = String.valueOf(data[3]);
             System.out.println("\nPoprawnie zalogowano.");
+
+            if ("buyer".equals(userType)) {
+                this.cart = new Cart(userId);
+                this.buyer = new Buyer(cart);
+            }
         } else {
             System.out.println("\nLogowanie nie powiodło się. Spróbuj ponownie.");
             login();
@@ -121,12 +125,13 @@ public class Menu {
         return hashedString;
     }
 
-    public void logout() throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public void logout(Cart cart) throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
         String action = getInput("Czy na pewno chcesz się wylogować? (tak/nie)");
         switch (action) {
             case "tak":
                 this.userId = 0;
                 this.userType = null;
+                cart.clearCart();
                 startMenu();
                 break;
             case "nie":
@@ -134,7 +139,7 @@ public class Menu {
                 break;
             default:
                 System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
-                logout();
+                logout(cart);
         }
     }
     public int getId(){
