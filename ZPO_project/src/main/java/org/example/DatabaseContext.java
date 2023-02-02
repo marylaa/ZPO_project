@@ -42,6 +42,12 @@ public class DatabaseContext {
         return getResult(result);
     }
 
+    public String getProductName(String productId) throws SQLException {
+        PreparedStatement function = connection.prepareStatement("select name from product_view where id like '" + productId + "';");
+        ResultSet result = function.executeQuery();
+        return getResult(result);
+    }
+
     public ResultSet getSellerProducts(int UserId) throws SQLException {
         PreparedStatement function = connection.prepareStatement("select name from seller_product_view where user_id = " + UserId + ";");
         return function.executeQuery();
@@ -91,6 +97,7 @@ public class DatabaseContext {
         ResultSetMetaData rsmd = resultSet.getMetaData();
         int columnsNumber = rsmd.getColumnCount(); // liczba kolumn
         int counter = 1;
+        System.out.println("");
         while (resultSet.next()) {
             for (int i = 1; i <= columnsNumber; i++) {
                 if (i > 1)
@@ -101,7 +108,6 @@ public class DatabaseContext {
             }
             System.out.println("");
         }
-        System.out.println("");
     }
 
     public String getResult(ResultSet resultSet) throws SQLException {

@@ -36,7 +36,7 @@ public class Menu {
             String action = getInput("Co chcesz zrobić? \n1 - wyświetlić listę kategorii \n2 - sprawdzić historię zamówień \n3 - sprawdzić zawartość koszyka \n4 - wylogować");
             while (!"1".equals(action) && !"2".equals(action) && !"3".equals(action) && !"4".equals(action)) {
                 System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
-                action = getInput("\nPodaj numer");
+                action = getInput("Podaj numer");
             }
             switch (action) {
                 case "1":
@@ -85,7 +85,7 @@ public class Menu {
         return scanner.nextLine();
     }
 
-    public void login() throws SQLException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public void login() throws SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
         String userLogin = getInput("Podaj login");
         String userPassword = getInput("Podaj hasło");
         String[] data = onlineShop.getUserInfo(userLogin);
@@ -136,5 +136,8 @@ public class Menu {
                 System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
                 logout();
         }
+    }
+    public int getId(){
+        return userId;
     }
 }

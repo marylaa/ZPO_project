@@ -15,8 +15,7 @@ public class Cart {
      */
     private Connection connection;
     private DatabaseContext onlineShop;
-    private int clientId;
-    private Map<Products, Integer> cartProducts = new HashMap<Products, Integer>();
+    private static Map<Products, Integer> cartProducts = new HashMap<Products, Integer>();
 
     /**
      * Metoda tworząca koszyk.
@@ -26,59 +25,59 @@ public class Cart {
     public Cart(int clientId) throws ClassNotFoundException, SQLException {
         this.connection = Connect.makeConnection();
         this.onlineShop = new DatabaseContext(connection);
-        try {
-            PreparedStatement selectAllSt = connection.prepareStatement("select id from carts where client_id='" + clientId + "';");
-            ResultSet rsAllSt = selectAllSt.executeQuery();
 
-            if (rsAllSt.next()) {
-                int cartId = rsAllSt.getInt(1);
-                PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, quantity from cart_items where cart_id='" + cartId + "';");
-                ResultSet rsAllSt1 = selectAllSt1.executeQuery();
+        PreparedStatement selectAllSt = connection.prepareStatement("select id from carts where client_id='" + clientId + "';");
+        ResultSet rsAllSt = selectAllSt.executeQuery();
 
-                while (rsAllSt1.next()) {
-                    String productId = rsAllSt1.getString(1);
-                    int productQuantity = rsAllSt1.getInt(2);
+        if (rsAllSt.next()) {
+            int cartId = rsAllSt.getInt(1);
+            PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, quantity from cart_items where cart_id='" + cartId + "';");
+            ResultSet rsAllSt1 = selectAllSt1.executeQuery();
 
-                    PreparedStatement selectAllSt5 = connection.prepareStatement("select name from products where id='" + productId + "';");
-                    ResultSet name = selectAllSt5.executeQuery();
-                    while (name.next()) {
-                        String productName = name.getString(1);
+            while (rsAllSt1.next()) {
+                String productId = rsAllSt1.getString(1);
+                int productQuantity = rsAllSt1.getInt(2);
 
-                        Products products = new Products(productName);
-                        cartProducts.put(products, productQuantity);
-                    }
+                PreparedStatement selectAllSt5 = connection.prepareStatement("select name from products where id='" + productId + "';");
+                ResultSet name = selectAllSt5.executeQuery();
+                while (name.next()) {
+                    String productName = name.getString(1);
+
+                    Products products = new Products(productName);
+                    cartProducts.put(products, productQuantity);
                 }
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
     /**
      * Metoda dodająca produkt do koszyka.
      *
-     * @param productName - nazwa produktu
-     * @param number      - liczba produktu
+     * @param productId - nazwa produktu
+     * @param number    - liczba produktu
      */
-    public void addProduct(String productName, int number) throws SQLException, ClassNotFoundException {
+    public void addProduct(String productId, int number) throws SQLException, ClassNotFoundException {
+        String productName = onlineShop.getProductName(productId);
         Products products = new Products(productName);
 
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
         boolean inDict = false;
         for (Map.Entry<Products, Integer> it : s) {
-
             Products productNameMap = it.getKey();
             if (productNameMap.getName().equals(productName)) {
                 String bo = changeProductValueMore(productName, number);
-
+                System.out.println("\nProdukt " + productName + " znajduje się juz w twoim koszyku. Zmodyfikowano jego ilość.");
                 if (!bo.equals("false")) {
                     inDict = true;
                 }
             }
         }
         if (!inDict) {
-            if (products.checkAvailability() >= number) {
+            if (products.getAvailability() >= number) {
                 cartProducts.put(products, number);
+                System.out.println("\nPomyślnie dodano produkt " + productName + " do koszyka.");
+            } else {
+                System.out.println("\nProdukt nie jest dostępny w podanej ilości (na stanie " + products.getAvailability() + " sztuk).");
             }
         }
     }
@@ -96,13 +95,16 @@ public class Cart {
             Products productNameMap = it.getKey();
             Integer number = it.getValue();
             int newNumber = number - toDelete;
-            if (newNumber >= 0) {
+            if (newNumber > 0) {
                 if (productNameMap.getName().equals(productName)) {
-
                     cartProducts.replace(productNameMap, newNumber);
+                } else {
+                    System.out.println("\nW twoim koszyku nie ma takiego produktu.");
                 }
+            } else if (newNumber == 0) {
+                deleteOneProduct(productName);
             } else {
-                System.out.println("Niewłaściwa liczba");
+                System.out.println("\nW koszyku nie masz takiej ilości produktu.");
             }
         }
         return "done";
@@ -123,11 +125,13 @@ public class Cart {
             if (productNameMap.getName().equals(productName)) {
                 Integer number = it.getValue();
                 int newNumber = number + toAdd;
-                if (products.checkAvailability() >= newNumber) {
+                if (products.getAvailability() >= newNumber) {
                     cartProducts.replace(productNameMap, newNumber);
                 } else {
-                    return "false";
+                    System.out.println("\nNa stanie nie ma takiej ilości produktu.");
                 }
+            } else {
+                System.out.println("\nW twoim koszyku nie ma takiego produktu.");
             }
         }
         return "done";
@@ -151,7 +155,7 @@ public class Cart {
 
     public void clearCart() {
         cartProducts.clear();
-        System.out.println("\nKoszyk został wyczyszczony.");
+        System.out.println("\nTwój koszyk został wyczyszczony.");
     }
 
     public void showCart(int userId) throws SQLException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException {
@@ -159,13 +163,16 @@ public class Cart {
 
         if (s.isEmpty()) {
             System.out.println("\nTwój koszyk jest pusty.");
+            return;
         }
 
+        int i = 1;
+        System.out.println("\nTwój koszyk:");
         for (Map.Entry<Products, Integer> it : s) {
             Products productName = it.getKey();
             Integer number = it.getValue();
-            System.out.println(productName);
-            System.out.println("Produkt: " + productName.getName() + ", liczba: " + number);
+            System.out.println("Produkt " + i + ": " + productName.getName() + ", cena za sztukę (zł): " + productName.getPrice() + ", liczba sztuk: " + number);
+            i++;
         }
         cartOperations(userId);
     }
@@ -177,13 +184,19 @@ public class Cart {
             case "1":
                 saveCart(userId);
                 buyCart(userId);
-                System.out.println("Kupiono produkt. COS LADNIEJ");
                 break;
             case "2":
-                //zmiana ilości w koszyku
+                wantToChangeAmount(userId, menu);
                 break;
             case "3":
-                clearCart();
+                String result = menu.getInput("Czy na pewno chcesz wyczyścic koszyk? (tak/nie)");
+                while (!"tak".equals(result) && !"nie".equals(result)) {
+                    System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
+                    result = menu.getInput("Czy na pewno chcesz wyczyścic koszyk? (tak/nie)");
+                }
+                if ("tak".equals(result)) {
+                    clearCart();
+                }
                 menu.startMenu();
                 break;
             case "4":
@@ -195,60 +208,97 @@ public class Cart {
         }
     }
 
+    private void wantToChangeAmount(int userId, Menu menu) throws SQLException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException {
+        if (cartProducts.isEmpty()) {
+            System.out.println("\nTwój koszyk jest pusty. Brak produktów do edycji ilości.");
+            return;
+        }
+
+        String product = menu.getInput("Którego produktu chcesz zmienić ilość?");
+        String moreOrLess = menu.getInput("Chcesz zmiejszyć jego ilość w koszyku czy zwiększyć? \n1 - zmiejszyć \n2 - zwiększyć");
+        while (!"1".equals(moreOrLess) && !"2".equals(moreOrLess)) {
+            System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
+            moreOrLess = menu.getInput("Chcesz zmiejszyć jego ilość w koszyku czy zwiększyć? \n1 - zmiejszyć \n2 - zwiększyć");
+        }
+        int number = 0;
+        while (number == 0) {
+            try {
+                number = Integer.valueOf(menu.getInput("O ile sztuk? (podaj liczbę)"));
+            } catch (IllegalArgumentException e) {
+                System.out.println("Błąd. Podaj liczbę.");
+            }
+        }
+        switch (moreOrLess) {
+            case "1":
+                changeProductValueLess(product, number);
+                showCart(userId);
+                break;
+            case "2":
+                changeProductValueMore(product, number);
+                showCart(userId);
+                break;
+        }
+    }
+
 
     /**
      * Metoda sprawdzająca historię zamówień.
      *
      * @param clientId - ID klienta
      */
-    public void checkOrdersHistory(int clientId) {
-        try {
-            System.out.println("\nHistoria zamówień klienta:");
+    public void checkOrdersHistory(int clientId) throws SQLException {
+        int counter = 1;
 
-            System.out.println("\nImię i nazwisko klienta:");
-            PreparedStatement selectAllSt2 = connection.prepareStatement("select concat(first_name, ' ', last_name) from users where id=" + clientId + ";");
-            ResultSet client = selectAllSt2.executeQuery();
-            onlineShop.printResultSet(client, null);
+        System.out.println("\nHISTORIA ZAMÓWIEŃ");
+        System.out.println("----------------------------------------------------------------------------");
 
-            PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, order_value from order_details where client_id='" + clientId + "';", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
-            ResultSet orderDetails = selectAllSt.executeQuery();
+        PreparedStatement selectAllSt2 = connection.prepareStatement("select first_name, last_name from orders_history where id=" + clientId + ";");
+        ResultSet client = selectAllSt2.executeQuery();
+        while (client.next()) {
+            String clientString = client.getString(1);
+            String clientString2 = client.getString(2);
 
-            if (orderDetails.next()) {
+            System.out.printf("| %30s |%n", "IMIĘ I NAZWISKO KLIENTA: " + clientString + " " + clientString2);
+        }
+        System.out.println("----------------------------------------------------------------------------");
 
-                orderDetails.beforeFirst();
-                while (orderDetails.next()) {
-                    int orderId = orderDetails.getInt(1);
-                    String date = orderDetails.getString(2);
-                    String value1 = orderDetails.getString(3);
+        PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, order_value from orders_history where client_id='" + clientId + "';", ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_UPDATABLE);
+        ResultSet orderDetails = selectAllSt.executeQuery();
 
-                    System.out.println("Szczegóły zamówienia:");
-                    System.out.println("id zamówienia, data utworzenia, wartość zamówienia [zł]");
-                    System.out.println(orderId + " " + date + " " + value1);
+        if (orderDetails.next()) {
+            orderDetails.beforeFirst();
+            while (orderDetails.next()) {
+                int orderId = orderDetails.getInt(1);
+                String date = orderDetails.getString(2);
+                String value1 = orderDetails.getString(3);
 
-                    System.out.println("Zamówione produkty : ");
-                    PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, order_id, quantity, items_value from order_items where order_id='" + orderId + "';");
-                    ResultSet orderedItems = selectAllSt1.executeQuery();
+                System.out.printf("| %10s |%n", "ZAMÓWIENIE NR " + counter);
+                System.out.printf("| %4s | %19s | %10s |%n", "ID", "DATA UTWORZENIA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
+                System.out.printf("| %4s | %10s | %23s |%n", orderId, date, value1);
+                System.out.println(" ");
+                System.out.printf("| %16s |%n", "ZAMÓWIONE PRODUKTY");
 
-                    while (orderedItems.next()) {
+                PreparedStatement selectAllSt1 = connection.prepareStatement("select product_id, order_id, quantity, items_value from orders_history where order_id='" + orderId + "';");
+                ResultSet orderedItems = selectAllSt1.executeQuery();
 
-                        String productsId = orderedItems.getString(1);
-                        int quantity = orderedItems.getInt(3);
-                        double value = orderedItems.getInt(4);
+                while (orderedItems.next()) {
+                    String productsId = orderedItems.getString(1);
+                    int quantity = orderedItems.getInt(3);
+                    double value = orderedItems.getInt(4);
 
-                        System.out.println(value + " zł");
-                        System.out.println(quantity + " szt.");
-
-                        PreparedStatement selectAllSt5 = connection.prepareStatement("select name from products where id='" + productsId + "';");
-                        ResultSet name = selectAllSt5.executeQuery();
-                        onlineShop.printResultSet(name, null);
+                    PreparedStatement selectAllSt5 = connection.prepareStatement("select product_name from orders_history where product_id='" + productsId + "';");
+                    ResultSet name = selectAllSt5.executeQuery();
+                    while (name.next()) {
+                        String nameString = name.getString(1);
+                        System.out.printf("| %17s | %8s | %10s | %10s |%n", "PRODUKT", "ID PRODUKTU", "LICZBA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
+                        System.out.printf("| %17s | %11s | %10s | %23s |%n", nameString, productsId, quantity, value);
+                        System.out.println("\n----------------------------------------------------------------------------");
                     }
+                    counter += 1;
                 }
-            } else {
-                System.out.println("Brak zamówień");
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (NullPointerException e) {
+        } else {
             System.out.println("Brak zamówień");
         }
     }
@@ -273,69 +323,58 @@ public class Cart {
      *
      * @param clientId - ID klienta
      */
-    public double saveCart(int clientId) {
+    public double saveCart(int clientId) throws SQLException {
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
 
-        try {
-            Statement stmt = connection.createStatement();
-
-            PreparedStatement selectAllSt2 = connection.prepareStatement("select id from carts order by id desc limit 1");
-            ResultSet cartToDelete = selectAllSt2.executeQuery();
-
-            while (cartToDelete.next()) {
-                int cartToDeleteInt = cartToDelete.getInt(1);
-
-                String sql00 = "delete from cart_items where cart_id='" + cartToDeleteInt + "';";
-                stmt.executeUpdate(sql00);
-
-                String sql0 = "delete from carts where id='" + cartToDeleteInt + "';";
-                stmt.executeUpdate(sql0);
-            }
-
-            String sql = "INSERT INTO carts(client_id) VALUES(" + clientId + ");";
-            stmt.executeUpdate(sql);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        if (s.isEmpty()) {
+            System.out.println("\nTwój koszyk jest pusty.");
+            return 0;
         }
+        Statement stmt = connection.createStatement();
+
+        PreparedStatement selectAllSt2 = connection.prepareStatement("select id from carts order by id desc limit 1");
+        ResultSet cartToDelete = selectAllSt2.executeQuery();
+
+        while (cartToDelete.next()) {
+            int cartToDeleteInt = cartToDelete.getInt(1);
+
+            String sql00 = "delete from cart_items where cart_id='" + cartToDeleteInt + "';";
+            stmt.executeUpdate(sql00);
+
+            String sql0 = "delete from carts where id='" + cartToDeleteInt + "';";
+            stmt.executeUpdate(sql0);
+        }
+        String sql = "INSERT INTO carts(client_id) VALUES(" + clientId + ");";
+        stmt.executeUpdate(sql);
 
         double cartValue = 0;
 
         for (Map.Entry<Products, Integer> it : s) {
             Products product = it.getKey();
-            String productName = product.getName();
             Integer number = it.getValue();
 
-            try {
-                Statement stmt = connection.createStatement();
+            stmt = connection.createStatement();
 
-                String idString = product.getId();
-                double priceInt = product.getPrice();
+            String idString = product.getId();
+            double priceInt = product.getPrice();
 
-                double itemsValue = number * priceInt;
+            double itemsValue = number * priceInt;
 
-                PreparedStatement selectAllSt3 = connection.prepareStatement("select id from carts order by id desc  limit 1;");
-                ResultSet cartTempId = selectAllSt3.executeQuery();
-                cartTempId.next();
-                String cartId = cartTempId.getString(1);
+            PreparedStatement selectAllSt3 = connection.prepareStatement("select id from carts order by id desc  limit 1;");
+            ResultSet cartTempId = selectAllSt3.executeQuery();
+            cartTempId.next();
+            String cartId = cartTempId.getString(1);
 
-                String sql = "INSERT INTO cart_items(product_id, cart_id, quantity, item_value) VALUES('" + idString + "'," + cartId + "," + number + "," + itemsValue + ");";
-                stmt.executeUpdate(sql);
-
-                cartValue += itemsValue;
-
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        try {
-            Statement stmt = connection.createStatement();
-
-            String sql = "update carts set cart_value=" + cartValue + "where client_id=" + clientId + ";";
+            sql = "INSERT INTO cart_items(product_id, cart_id, quantity, item_value) VALUES('" + idString + "'," + cartId + "," + number + "," + itemsValue + ");";
             stmt.executeUpdate(sql);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+
+            cartValue += itemsValue;
         }
+        stmt = connection.createStatement();
+
+        sql = "update carts set cart_value=" + cartValue + "where client_id=" + clientId + ";";
+        stmt.executeUpdate(sql);
+
         return cartValue;
     }
 
@@ -344,73 +383,72 @@ public class Cart {
      *
      * @param clientId - ID klienta
      */
-    public void buyCart(int clientId) throws ClassNotFoundException {
+    public void buyCart(int clientId) throws ClassNotFoundException, SQLException {
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
 
+        if (s.isEmpty()) {
+            System.out.println("Dodaj produkty do koszyka, aby móc złożyć zamówienie.");
+            return;
+        }
         double cartValue = saveCart(clientId);
 
-        try {
-            Statement stmt = connection.createStatement();
-            InProductStats stats = new InProductStats();
+        Statement stmt = connection.createStatement();
+        InProductStats stats = new InProductStats();
 
-            String sql = "insert into order_details(client_id, created_date, order_value, status)" +
-                    " values (" + clientId + ", current_timestamp()," + cartValue + ", 'created');";
-            stmt.executeUpdate(sql);
+        String sql = "insert into order_details(client_id, created_date, order_value, status)" +
+                " values (" + clientId + ", current_timestamp()," + cartValue + ", 'created');";
+        stmt.executeUpdate(sql);
 
-            for (Map.Entry<Products, Integer> it : s) {
-                Products product = it.getKey();
-                Integer number = it.getValue();
+        for (Map.Entry<Products, Integer> it : s) {
+            Products product = it.getKey();
+            Integer number = it.getValue();
 
-                stats.addToProductStats(product.getId());
+            stats.addToProductStats(product.getId());
 
-                PreparedStatement selectAllSt1 = connection.prepareStatement("select id from product_stats where product_id='" + product.getId() + "';");
-                ResultSet rs1 = selectAllSt1.executeQuery();
-                if (rs1.next()) {
+            PreparedStatement selectAllSt1 = connection.prepareStatement("select id from product_stats where product_id='" + product.getId() + "';");
+            ResultSet rs1 = selectAllSt1.executeQuery();
+            if (rs1.next()) {
 
-                    int productStatsId = rs1.getInt(1);
+                int productStatsId = rs1.getInt(1);
 
-                    PreparedStatement selectAllSt2 = connection.prepareStatement("select purchased_quantity from product_stats where product_id='" + productStatsId + "';");
-                    ResultSet rs2 = selectAllSt2.executeQuery();
-                    if (rs2.next()) {
-                        int quantity = rs2.getInt(1);
-                        String sql9 = "update product_stats set purchased_quantity=" + quantity + "+" + number + " where id='" + productStatsId + "';";
-                        stmt.executeUpdate(sql9);
-                    } else {
-                        int quantity = 0;
+                PreparedStatement selectAllSt2 = connection.prepareStatement("select purchased_quantity from product_stats where product_id='" + productStatsId + "';");
+                ResultSet rs2 = selectAllSt2.executeQuery();
+                if (rs2.next()) {
+                    int quantity = rs2.getInt(1);
+                    String sql9 = "update product_stats set purchased_quantity=" + quantity + "+" + number + " where id='" + productStatsId + "';";
+                    stmt.executeUpdate(sql9);
+                } else {
+                    int quantity = 0;
 
-                        String sql9 = "update product_stats set purchased_quantity=" + quantity + "+" + number + " where id='" + productStatsId + "';";
-                        stmt.executeUpdate(sql9);
-                    }
-                }
-
-                PreparedStatement selectAllSt3 = connection.prepareStatement("select id from order_details order by id desc limit 1;");
-                ResultSet orderTempId = selectAllSt3.executeQuery();
-                while (orderTempId.next()) {
-                    String orderId = orderTempId.getString(1);
-
-                    double itemsValue = number * product.getPrice();
-
-                    String sql1 = "INSERT INTO order_items(product_id, order_id, quantity, items_value) VALUES('" + product.getId() + "','" + orderId + "'," + number + "," + itemsValue + ");";
-                    stmt.executeUpdate(sql1);
-
-                    PreparedStatement selectAllSt6 = connection.prepareStatement("select id from carts where client_id='" + clientId + "';");
-                    ResultSet cartId = selectAllSt6.executeQuery();
-                    while (cartId.next()) {
-                        int cart = cartId.getInt(1);
-
-                        String sql7 = "delete from cart_items where cart_id=" + cart + ";";
-                        stmt.executeUpdate(sql7);
-                    }
-
-                    String sql5 = "delete from carts where client_id='" + clientId + "';";
-                    stmt.executeUpdate(sql5);
-
-                    String sql8 = "update products set availability=availability-" + number + " where id='" + product.getId() + "';";
-                    stmt.executeUpdate(sql8);
+                    String sql9 = "update product_stats set purchased_quantity=" + quantity + "+" + number + " where id='" + productStatsId + "';";
+                    stmt.executeUpdate(sql9);
                 }
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            PreparedStatement selectAllSt3 = connection.prepareStatement("select id from order_details order by id desc limit 1;");
+            ResultSet orderTempId = selectAllSt3.executeQuery();
+            while (orderTempId.next()) {
+                String orderId = orderTempId.getString(1);
+
+                double itemsValue = number * product.getPrice();
+
+                String sql1 = "INSERT INTO order_items(product_id, order_id, quantity, items_value) VALUES('" + product.getId() + "','" + orderId + "'," + number + "," + itemsValue + ");";
+                stmt.executeUpdate(sql1);
+
+                PreparedStatement selectAllSt6 = connection.prepareStatement("select id from carts where client_id='" + clientId + "';");
+                ResultSet cartId = selectAllSt6.executeQuery();
+                while (cartId.next()) {
+                    int cart = cartId.getInt(1);
+
+                    String sql7 = "delete from cart_items where cart_id=" + cart + ";";
+                    stmt.executeUpdate(sql7);
+                }
+                String sql5 = "delete from carts where client_id='" + clientId + "';";
+                stmt.executeUpdate(sql5);
+
+                String sql8 = "update products set availability=availability-" + number + " where id='" + product.getId() + "';";
+                stmt.executeUpdate(sql8);
+            }
         }
+        System.out.println("\nPoprawnie złożono zamówienie. Aby zamówienie zostało zrealizowane prosimy dokonać płatności " + cartValue + " zł na wskazny numer bankowy: 0000111113333344444. Dziękujemy!");
     }
 }
