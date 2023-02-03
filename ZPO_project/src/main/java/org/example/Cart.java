@@ -26,6 +26,7 @@ public class Cart {
         this.connection = Connect.makeConnection();
         this.onlineShop = new DatabaseContext(connection);
 
+        Statement stmt = connection.createStatement();
         PreparedStatement selectAllSt = connection.prepareStatement("select id from carts where client_id='" + clientId + "';");
         ResultSet rsAllSt = selectAllSt.executeQuery();
 
@@ -48,6 +49,17 @@ public class Cart {
                 }
             }
         }
+
+        PreparedStatement selectAllSt6 = connection.prepareStatement("select id from carts where client_id='" + clientId + "';");
+        ResultSet cartId = selectAllSt6.executeQuery();
+        while (cartId.next()) {
+            int cart = cartId.getInt(1);
+
+            String sql7 = "delete from cart_items where cart_id=" + cart + ";";
+            stmt.executeUpdate(sql7);
+        }
+        String sql9 = "delete from carts where client_id='" + clientId + "';";
+        stmt.executeUpdate(sql9);
     }
 
     /**
@@ -119,6 +131,7 @@ public class Cart {
     public String changeProductValueMore(String productName, int toAdd) throws SQLException, ClassNotFoundException {
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
         Products products = new Products(productName);
+        boolean done = false;
 
         for (Map.Entry<Products, Integer> it : s) {
             Products productNameMap = it.getKey();
@@ -127,12 +140,14 @@ public class Cart {
                 int newNumber = number + toAdd;
                 if (products.getAvailability() >= newNumber) {
                     cartProducts.replace(productNameMap, newNumber);
+                    done = true;
                 } else {
                     System.out.println("\nNa stanie nie ma takiej ilości produktu.");
                 }
-            } else {
-                System.out.println("\nW twoim koszyku nie ma takiego produktu.");
             }
+        }
+        if(!done) {
+            System.out.println("\nW twoim koszyku nie ma takiego produktu.");
         }
         return "done";
     }
@@ -249,13 +264,13 @@ public class Cart {
     public void checkOrdersHistory(int clientId) throws SQLException {
         int counter = 1;
 
-        PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, order_value from orders_history where client_id='" + clientId + "';", ResultSet.TYPE_SCROLL_SENSITIVE,
+        PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, status, order_value from orders_history where client_id='" + clientId + "';", ResultSet.TYPE_SCROLL_SENSITIVE,
                 ResultSet.CONCUR_UPDATABLE);
         ResultSet orderDetails = selectAllSt.executeQuery();
 
         if (orderDetails.next()) {
             System.out.println("\nHISTORIA ZAMÓWIEŃ");
-            System.out.println("----------------------------------------------------------------------------");
+            System.out.println("---------------------------------------------------------------------------------------");
 
             PreparedStatement selectAllSt2 = connection.prepareStatement("select first_name, last_name from orders_history where id=" + clientId + ";");
             ResultSet client = selectAllSt2.executeQuery();
@@ -265,17 +280,18 @@ public class Cart {
 
                 System.out.printf("| %30s |%n", "IMIĘ I NAZWISKO KLIENTA: " + clientString + " " + clientString2);
             }
-            System.out.println("----------------------------------------------------------------------------");
+            System.out.println("---------------------------------------------------------------------------------------");
 
             orderDetails.beforeFirst();
             while (orderDetails.next()) {
                 int orderId = orderDetails.getInt(1);
                 String date = orderDetails.getString(2);
-                String value1 = orderDetails.getString(3);
+                String status = orderDetails.getString(3);
+                String value1 = orderDetails.getString(4);
 
                 System.out.printf("| %10s |%n", "ZAMÓWIENIE NR " + counter);
-                System.out.printf("| %4s | %19s | %10s |%n", "ID", "DATA UTWORZENIA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
-                System.out.printf("| %4s | %10s | %23s |%n", orderId, date, value1);
+                System.out.printf("| %8s | %20s | %20s | %26s |%n", "ID", "DATA UTWORZENIA", "STATUS ZAMÓWIENIA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
+                System.out.printf("| %8s | %20s | %20s | %26s |%n", orderId, date, status, value1);
                 System.out.println(" ");
                 System.out.printf("| %16s |%n", "ZAMÓWIONE PRODUKTY");
 
@@ -291,12 +307,12 @@ public class Cart {
                     ResultSet name = selectAllSt5.executeQuery();
                     while (name.next()) {
                         String nameString = name.getString(1);
-                        System.out.printf("| %20s | %8s | %10s | %10s |%n", "PRODUKT", "ID PRODUKTU", "LICZBA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
-                        System.out.printf("| %20s | %11s | %10s | %23s |%n", nameString, productsId, quantity, value);
-                        System.out.println("\n----------------------------------------------------------------------------");
+                        System.out.printf("| %30s | %8s | %10s | %10s |%n", "PRODUKT", "ID PRODUKTU", "LICZBA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
+                        System.out.printf("| %30s | %11s | %10s | %23s |%n", nameString, productsId, quantity, value);
+                        System.out.println("\n---------------------------------------------------------------------------------------");
                     }
-                    counter += 1;
                 }
+                counter += 1;
             }
         } else {
             System.out.println("\nBrak zamówień w historii.");
@@ -395,9 +411,10 @@ public class Cart {
         Statement stmt = connection.createStatement();
 
         String sql = "insert into order_details(client_id, created_date, order_value, status)" +
-                " values (" + clientId + ", current_timestamp()," + cartValue + ", 'created');";
+                " values (" + clientId + ", current_timestamp()," + cartValue + ", 'utworzone');";
         stmt.executeUpdate(sql);
 
+        String orderId = "";
         for (Map.Entry<Products, Integer> it : s) {
             Products product = it.getKey();
             Integer number = it.getValue();
@@ -405,7 +422,6 @@ public class Cart {
             PreparedStatement selectAllSt1 = connection.prepareStatement("select id from product_stats where product_id='" + product.getId() + "';");
             ResultSet rs1 = selectAllSt1.executeQuery();
             if (rs1.next()) {
-
                 int productStatsId = rs1.getInt(1);
 
                 PreparedStatement selectAllSt2 = connection.prepareStatement("select purchased_quantity from product_stats where product_id='" + productStatsId + "';");
@@ -424,7 +440,7 @@ public class Cart {
             PreparedStatement selectAllSt3 = connection.prepareStatement("select id from order_details order by id desc limit 1;");
             ResultSet orderTempId = selectAllSt3.executeQuery();
             while (orderTempId.next()) {
-                String orderId = orderTempId.getString(1);
+                orderId = orderTempId.getString(1);
 
                 double itemsValue = number * product.getPrice();
 
@@ -447,6 +463,8 @@ public class Cart {
             }
         }
         clearCart();
-        System.out.println("\nPoprawnie złożono zamówienie. Aby zamówienie zostało zrealizowane prosimy dokonać płatności " + cartValue + " zł na wskazny numer bankowy: 0000111113333344444. Dziękujemy!");
+        PreparedStatement select = connection.prepareStatement("select email from clients_info where user_id='" + clientId + "';");
+        String email = onlineShop.getResult(select.executeQuery());
+        System.out.println("\nPoprawnie złożono zamówienie. \nAby zamówienie zostało zrealizowane prosimy dokonać płatności " + cartValue + " zł na wskazny numer bankowy: 0000111113333344444 o tytule przelewu \"Numer zamówienia " + orderId + "\". \nDziękujemy za zakupy! \nSzczegółowe informacje związane ze złożonym zamówieniem wysłano na adres email: " + email);
     }
 }

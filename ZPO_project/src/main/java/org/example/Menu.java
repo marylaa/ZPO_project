@@ -31,7 +31,6 @@ public class Menu {
         }
 
         if ("buyer".equals(userType)) {
-
             String action = getInput("Co chcesz zrobić? \n1 - wyświetlić listę kategorii \n2 - sprawdzić historię zamówień \n3 - sprawdzić zawartość koszyka \n4 - wylogować");
             while (!"1".equals(action) && !"2".equals(action) && !"3".equals(action) && !"4".equals(action)) {
                 System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");

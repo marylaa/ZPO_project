@@ -7,9 +7,11 @@ public class Opinions {
      * Klasa reprezentująca opinie.
      */
     private Connection connection;
+    private DatabaseContext onlineShop;
 
     public Opinions() throws SQLException, ClassNotFoundException {
         this.connection = Connect.makeConnection();
+        this.onlineShop = new DatabaseContext(connection);
     }
 
     /**
@@ -20,8 +22,18 @@ public class Opinions {
      * @param rating    - ocena
      * @param text      - treść opinii
      */
-    public void addOpinion(int clientId, String productId, String text, double rating) throws ClassNotFoundException, SQLException {
+    public void addOpinion(int clientId, String productId, String text, double rating) throws SQLException {
         Statement stmt = connection.createStatement();
+        String productName = onlineShop.getProductName(productId);
+
+        int numberOfOpinions;
+        PreparedStatement selectAllSt4 = connection.prepareStatement("select count(description) from show_opinions where product_name='" + productName + "';");
+        ResultSet rs4 = selectAllSt4.executeQuery();
+        if (rs4.next()) {
+            numberOfOpinions = rs4.getInt(1);
+        } else {
+            numberOfOpinions = 0;
+        }
 
         PreparedStatement selectAllSt1 = connection.prepareStatement("select id, rating from product_stats where product_id='" + productId + "';");
         ResultSet rs1 = selectAllSt1.executeQuery();
@@ -37,7 +49,7 @@ public class Opinions {
                 String sql9 = "update product_stats set rating=" + finalRating + " where id='" + productStatsId + "';";
                 stmt.executeUpdate(sql9);
             } else if (productStatsRating != 0) {
-                double finalRating = (productStatsRating + rating) / 2;
+                double finalRating = (productStatsRating * numberOfOpinions + rating) / (numberOfOpinions + 1);
                 String sql9 = "update product_stats set rating=" + finalRating + " where id='" + productStatsId + "';";
                 stmt.executeUpdate(sql9);
             }
