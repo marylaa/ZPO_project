@@ -11,7 +11,6 @@ public class Main {
             Menu menu = new Menu();
             menu.startMenu();
         } catch (SQLException | ClassNotFoundException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-            System.out.println(e.getMessage());
             System.out.println("Przepraszamy. Wystąpił błąd.");
         }
     }

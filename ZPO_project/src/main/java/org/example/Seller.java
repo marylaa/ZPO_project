@@ -2,14 +2,17 @@ package org.example;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 public class Seller {
     private DatabaseContext onlineShop;
+    private Connection connection;
     private Menu menu;
 
-    public Seller() throws SQLException, ClassNotFoundException {
-        this.onlineShop = new DatabaseContext(Connect.makeConnection());
+    public Seller(DatabaseContext onlineShop, Connection connection) throws SQLException, ClassNotFoundException {
+        this.onlineShop = onlineShop;
+        this.connection = connection;
         this.menu = new Menu();
     }
 
@@ -61,17 +64,29 @@ public class Seller {
     }
 
     public void sellerAddProducts(int userId) throws SQLException, ClassNotFoundException {
-        InProductStats inProductStats = new InProductStats();
+        InProductStats inProductStats = new InProductStats(connection);
         String id = menu.getInput("Podaj id produktu");
         String category = menu.getInput("Podaj id kategorii");
         String name = menu.getInput("Podaj nazwę produktu");
         String producer = menu.getInput("Podaj producenta");
         String description = menu.getInput("Podaj opis produktu");
-        String price = menu.getInput("Podaj cenę (w zł)");
-        double priceDouble = Double.valueOf(price);
-        String availability = menu.getInput("Podaj dostępną liczbę sztuk");
-        int availabilityInteger = Integer.valueOf(availability);
-        onlineShop.addProduct(id, category, name, producer, description, priceDouble, userId, availabilityInteger);
+        double price = -1;
+        while (price < 0) {
+            try {
+                price = Double.valueOf(menu.getInput("Podaj cenę (w zł)"));
+            } catch (IllegalArgumentException e) {
+                System.out.println("Błąd. Podaj liczbę.");
+            }
+        }
+        int availability = -1;
+        while (availability < 0) {
+            try {
+                availability = Integer.valueOf(menu.getInput("Podaj dostępną liczbę sztuk"));
+            } catch (IllegalArgumentException e) {
+                System.out.println("Błąd. Podaj liczbę.");
+            }
+        }
+        onlineShop.addProduct(id, category, name, producer, description, price, userId, availability);
 
         inProductStats.addToProductStats(id);
     }

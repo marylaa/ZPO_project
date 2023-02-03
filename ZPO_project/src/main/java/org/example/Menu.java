@@ -7,6 +7,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Scanner;
 
@@ -14,12 +15,12 @@ public class Menu {
     private static String userType;
     private static int userId;
     private static DatabaseContext onlineShop;
+    private static Connection connection;
     private static Seller seller;
     private static Buyer buyer;
     private static Cart cart;
 
     public Menu() throws SQLException, ClassNotFoundException {
-        this.onlineShop = new DatabaseContext(Connect.makeConnection());
     }
 
     public void startMenu() throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
@@ -54,8 +55,6 @@ public class Menu {
                     break;
             }
         } else {
-            this.seller = new Seller();
-
             String action = getInput("Co chcesz zrobić? \n1 - wyświetlić listę swoich produktów \n2 - dodać nowe produkty \n3 - wylogować");
             while (!"1".equals(action) && !"2".equals(action) && !"3".equals(action)) {
                 System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
@@ -84,6 +83,7 @@ public class Menu {
     }
 
     public void login() throws SQLException, NoSuchAlgorithmException, InvalidKeySpecException, ClassNotFoundException {
+        this.onlineShop = new DatabaseContext(Connect.makeConnectionUser());
         String userLogin = getInput("Podaj login");
         String userPassword = getInput("Podaj hasło");
         String[] data = onlineShop.getUserInfo(userLogin);
@@ -101,8 +101,14 @@ public class Menu {
             System.out.println("\nPoprawnie zalogowano.");
 
             if ("buyer".equals(userType)) {
-                this.cart = new Cart(userId);
-                this.buyer = new Buyer(cart);
+                this.connection = Connect.makeConnectionBuyer();
+                this.onlineShop = new DatabaseContext(connection);
+                this.cart = new Cart(userId, onlineShop, connection);
+                this.buyer = new Buyer(cart, onlineShop, connection);
+            } else {
+                this.connection = Connect.makeConnectionSeller();
+                this.onlineShop = new DatabaseContext(connection);
+                this.seller = new Seller(onlineShop, connection);
             }
         } else {
             System.out.println("\nLogowanie nie powiodło się. Spróbuj ponownie.");
@@ -130,7 +136,9 @@ public class Menu {
             case "tak":
                 this.userId = 0;
                 this.userType = null;
-                cart.clearCart();
+                if(cart != null) {
+                    cart.clearCart();
+                }
                 startMenu();
                 break;
             case "nie":

@@ -9,8 +9,8 @@ public class InProductStats {
      */
     private Connection connection;
 
-    public InProductStats() throws SQLException, ClassNotFoundException {
-        this.connection = Connect.makeConnection();
+    public InProductStats(Connection connection) throws SQLException, ClassNotFoundException {
+        this.connection = connection;
     }
 
     /**

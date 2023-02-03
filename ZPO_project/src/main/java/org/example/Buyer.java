@@ -2,17 +2,20 @@ package org.example;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 public class Buyer {
     private DatabaseContext onlineShop;
+    private Connection connection;
     private Menu menu;
     private Cart cart;
 
-    public Buyer(Cart cart) throws SQLException, ClassNotFoundException {
-        this.onlineShop = new DatabaseContext(Connect.makeConnection());
+    public Buyer(Cart cart, DatabaseContext onlineShop, Connection connection) throws SQLException, ClassNotFoundException {
+        this.onlineShop = onlineShop;
+        this.connection = connection;
         this.menu = new Menu();
         this.cart = cart;
     }
@@ -130,7 +133,7 @@ public class Buyer {
             System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
             action = menu.getInput("\nPodaj numer");
         }
-        Opinions opinions = new Opinions();
+        Opinions opinions = new Opinions(onlineShop, connection);
         switch (action) {
             case "1":
                 addProductToCart(productId);

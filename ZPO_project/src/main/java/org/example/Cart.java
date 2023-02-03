@@ -22,9 +22,9 @@ public class Cart {
      *
      * @param clientId - ID klienta
      */
-    public Cart(int clientId) throws ClassNotFoundException, SQLException {
-        this.connection = Connect.makeConnection();
-        this.onlineShop = new DatabaseContext(connection);
+    public Cart(int clientId, DatabaseContext onlineShop, Connection connection) throws ClassNotFoundException, SQLException {
+        this.connection = connection;
+        this.onlineShop = onlineShop;
 
         Statement stmt = connection.createStatement();
         PreparedStatement selectAllSt = connection.prepareStatement("select id from carts where client_id='" + clientId + "';");
@@ -44,7 +44,7 @@ public class Cart {
                 while (name.next()) {
                     String productName = name.getString(1);
 
-                    Products products = new Products(productName);
+                    Products products = new Products(connection, productName);
                     cartProducts.put(products, productQuantity);
                 }
             }
@@ -70,7 +70,7 @@ public class Cart {
      */
     public void addProduct(String productId, int number) throws SQLException, ClassNotFoundException {
         String productName = onlineShop.getProductName(productId);
-        Products products = new Products(productName);
+        Products products = new Products(connection, productName);
 
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
         boolean inDict = false;
@@ -130,7 +130,7 @@ public class Cart {
      */
     public String changeProductValueMore(String productName, int toAdd) throws SQLException, ClassNotFoundException {
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
-        Products products = new Products(productName);
+        Products products = new Products(connection, productName);
         boolean done = false;
 
         for (Map.Entry<Products, Integer> it : s) {
@@ -264,7 +264,7 @@ public class Cart {
     public void checkOrdersHistory(int clientId) throws SQLException {
         int counter = 1;
 
-        PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, status, order_value from orders_history where client_id='" + clientId + "';", ResultSet.TYPE_SCROLL_SENSITIVE,
+        PreparedStatement selectAllSt = connection.prepareStatement("select id, created_date, status, order_value from orders_history where client_id='" + clientId + "' group by id;", ResultSet.TYPE_SCROLL_SENSITIVE,
                 ResultSet.CONCUR_UPDATABLE);
         ResultSet orderDetails = selectAllSt.executeQuery();
 
@@ -272,7 +272,7 @@ public class Cart {
             System.out.println("\nHISTORIA ZAMÓWIEŃ");
             System.out.println("---------------------------------------------------------------------------------------");
 
-            PreparedStatement selectAllSt2 = connection.prepareStatement("select first_name, last_name from orders_history where id=" + clientId + ";");
+            PreparedStatement selectAllSt2 = connection.prepareStatement("select first_name, last_name from orders_history where id=" + clientId + " limit 1;");
             ResultSet client = selectAllSt2.executeQuery();
             while (client.next()) {
                 String clientString = client.getString(1);

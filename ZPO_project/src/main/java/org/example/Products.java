@@ -22,8 +22,8 @@ public class Products {
      *
      * @param productName - nazwa produktu
      */
-    public Products(String productName) throws ClassNotFoundException, SQLException {
-        this.connection = Connect.makeConnection();
+    public Products(Connection connection, String productName) throws ClassNotFoundException, SQLException {
+        this.connection = connection;
 
         PreparedStatement selectAllSt = connection.prepareStatement("select id, category_id, producer, description, price, added_date, user_id, availability from products where name='" + productName + "';");
         ResultSet rs = selectAllSt.executeQuery();

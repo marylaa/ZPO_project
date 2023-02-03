@@ -9,9 +9,9 @@ public class Opinions {
     private Connection connection;
     private DatabaseContext onlineShop;
 
-    public Opinions() throws SQLException, ClassNotFoundException {
-        this.connection = Connect.makeConnection();
-        this.onlineShop = new DatabaseContext(connection);
+    public Opinions(DatabaseContext onlineShop, Connection connection) throws SQLException, ClassNotFoundException {
+        this.connection = connection;
+        this.onlineShop = onlineShop;
     }
 
     /**
