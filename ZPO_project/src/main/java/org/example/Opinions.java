@@ -9,7 +9,19 @@ public class Opinions {
     private Connection connection;
     private DatabaseContext onlineShop;
 
-    public Opinions(DatabaseContext onlineShop, Connection connection) throws SQLException, ClassNotFoundException {
+    /**
+     * Bezparametrowy konstruktor.
+     */
+    public Opinions() {
+    }
+
+    /**
+     * Parametrowy konstruktor.
+     *
+     * @param onlineShop obiekt klasy DatabaseContext
+     * @param connection obiekt klasy Connection
+     */
+    public Opinions(DatabaseContext onlineShop, Connection connection) {
         this.connection = connection;
         this.onlineShop = onlineShop;
     }
@@ -17,8 +29,8 @@ public class Opinions {
     /**
      * Metoda dodająca opinię o produkcie.
      *
-     * @param clientId  - ID klienta
-     * @param productId - nazwa produktu
+     * @param clientId  - id klienta
+     * @param productId - id produktu
      * @param rating    - ocena
      * @param text      - treść opinii
      */
@@ -60,7 +72,7 @@ public class Opinions {
     /**
      * Metoda drukująca opinie o produkcie.
      *
-     * @param productId - nazwa produktu
+     * @param productId - id produktu
      */
     public void showOpinions(String productId) throws SQLException {
         PreparedStatement selectAllSt1 = connection.prepareStatement("select rating, id from product_stats where product_id like '" + productId + "' limit 1;");

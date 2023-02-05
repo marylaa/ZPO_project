@@ -3,6 +3,7 @@ package org.example;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.*;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -22,7 +23,7 @@ public class Cart {
      *
      * @param clientId - ID klienta
      */
-    public Cart(int clientId, DatabaseContext onlineShop, Connection connection) throws ClassNotFoundException, SQLException {
+    public Cart(int clientId, DatabaseContext onlineShop, Connection connection) throws SQLException {
         this.connection = connection;
         this.onlineShop = onlineShop;
 
@@ -65,7 +66,7 @@ public class Cart {
     /**
      * Metoda dodająca produkt do koszyka.
      *
-     * @param productId - nazwa produktu
+     * @param productId - id produktu
      * @param number    - liczba produktu
      */
     public void addProduct(String productId, int number) throws SQLException, ClassNotFoundException {
@@ -146,7 +147,7 @@ public class Cart {
                 }
             }
         }
-        if(!done) {
+        if (!done) {
             System.out.println("\nW twoim koszyku nie ma takiego produktu.");
         }
         return "done";
@@ -155,7 +156,7 @@ public class Cart {
     /**
      * Metoda usuwajaca jedną liczbę produktu.
      *
-     * @param productName - produkt którego chcemy usunąć 1 liczbę
+     * @param productName - produkt, którego chcemy usunąć 1 liczbę
      */
     public void deleteOneProduct(String productName) {
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
@@ -168,10 +169,18 @@ public class Cart {
         }
     }
 
+    /**
+     * Metoda czyszcząca koszyk.
+     */
     public void clearCart() {
         cartProducts.clear();
     }
 
+    /**
+     * Metoda wyświetlająca koszyk.
+     *
+     * @param userId - id klienta
+     */
     public void showCart(int userId) throws SQLException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException {
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
 
@@ -191,6 +200,11 @@ public class Cart {
         cartOperations(userId);
     }
 
+    /**
+     * Metoda będąca częścią interface'u, obsługuje zapytanie dotyczące zapisania koszyka.
+     *
+     * @param userId - id klienta
+     */
     public void cartOperations(int userId) throws SQLException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException {
         Menu menu = new Menu();
         String action = menu.getInput("Co chcesz dalej zrobić? \n1 - kupić produkty z koszyka \n2 - edytować ilość danego produktu \n3 - wyczyścić koszyk \n4 - wrócić do menu");
@@ -223,6 +237,11 @@ public class Cart {
         }
     }
 
+    /**
+     * Metoda będąca częścią interface'u, obsługuje zapytanie dotyczące zmiany liczby produktów w koszyku.
+     *
+     * @param userId - id klienta
+     */
     private void wantToChangeAmount(int userId, Menu menu) throws SQLException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException {
         if (cartProducts.isEmpty()) {
             System.out.println("\nTwój koszyk jest pusty. Brak produktów do edycji ilości.");
@@ -259,7 +278,7 @@ public class Cart {
     /**
      * Metoda sprawdzająca historię zamówień.
      *
-     * @param clientId - ID klienta
+     * @param clientId - id klienta
      */
     public void checkOrdersHistory(int clientId) throws SQLException {
         int counter = 1;
@@ -270,7 +289,7 @@ public class Cart {
 
         if (orderDetails.next()) {
             System.out.println("\nHISTORIA ZAMÓWIEŃ");
-            System.out.println("---------------------------------------------------------------------------------------");
+            System.out.println("-----------------------------------------------------------------------------------------");
 
             PreparedStatement selectAllSt2 = connection.prepareStatement("select first_name, last_name from orders_history where id=" + clientId + " limit 1;");
             ResultSet client = selectAllSt2.executeQuery();
@@ -280,7 +299,7 @@ public class Cart {
 
                 System.out.printf("| %30s |%n", "IMIĘ I NAZWISKO KLIENTA: " + clientString + " " + clientString2);
             }
-            System.out.println("---------------------------------------------------------------------------------------");
+            System.out.println("-----------------------------------------------------------------------------------------");
 
             orderDetails.beforeFirst();
             while (orderDetails.next()) {
@@ -290,8 +309,8 @@ public class Cart {
                 String value1 = orderDetails.getString(4);
 
                 System.out.printf("| %10s |%n", "ZAMÓWIENIE NR " + counter);
-                System.out.printf("| %8s | %20s | %20s | %26s |%n", "ID", "DATA UTWORZENIA", "STATUS ZAMÓWIENIA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
-                System.out.printf("| %8s | %20s | %20s | %26s |%n", orderId, date, status, value1);
+                System.out.printf("| %10s | %20s | %20s | %26s |%n", "ID", "DATA UTWORZENIA", "STATUS ZAMÓWIENIA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
+                System.out.printf("| %10s | %20s | %20s | %26s |%n", orderId, date, status, value1);
                 System.out.println(" ");
                 System.out.printf("| %16s |%n", "ZAMÓWIONE PRODUKTY");
 
@@ -301,15 +320,15 @@ public class Cart {
                 while (orderedItems.next()) {
                     String productsId = orderedItems.getString(1);
                     int quantity = orderedItems.getInt(3);
-                    double value = orderedItems.getInt(4);
+                    double value = orderedItems.getDouble(4);
 
-                    PreparedStatement selectAllSt5 = connection.prepareStatement("select product_name from orders_history where product_id='" + productsId + "';");
+                    PreparedStatement selectAllSt5 = connection.prepareStatement("select product_name from orders_history where product_id='" + productsId + "' and order_id='" + orderId + "';");
                     ResultSet name = selectAllSt5.executeQuery();
                     while (name.next()) {
                         String nameString = name.getString(1);
-                        System.out.printf("| %30s | %8s | %10s | %10s |%n", "PRODUKT", "ID PRODUKTU", "LICZBA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
-                        System.out.printf("| %30s | %11s | %10s | %23s |%n", nameString, productsId, quantity, value);
-                        System.out.println("\n---------------------------------------------------------------------------------------");
+                        System.out.printf("| %32s | %8s | %10s | %10s |%n", "PRODUKT", "ID PRODUKTU", "LICZBA", "WARTOŚĆ ZAMÓWIENIA [ZŁ]");
+                        System.out.printf("| %32s | %11s | %10s | %23s |%n", nameString, productsId, quantity, value);
+                        System.out.println("\n-----------------------------------------------------------------------------------------");
                     }
                 }
                 counter += 1;
@@ -319,7 +338,12 @@ public class Cart {
         }
     }
 
-    public void wantToSaveCart(int userId) throws SQLException, ClassNotFoundException {
+    /**
+     * Metoda będąca częścią interface'u, obsługuje zapytanie dotyczące zapisania koszyka.
+     *
+     * @param userId - id klienta
+     */
+    public void wantToSaveCart(int userId) throws SQLException {
         Menu menu = new Menu();
         String action = menu.getInput("Czy chcesz zostawić zakupy w koszyku do następnego logowania? \n1 - tak \n2 - nie");
         switch (action) {
@@ -337,7 +361,7 @@ public class Cart {
     /**
      * Metoda zapisująca koszyk.
      *
-     * @param clientId - ID klienta
+     * @param clientId - id klienta
      */
     public double saveCart(int clientId) throws SQLException {
         Set<Map.Entry<Products, Integer>> s = cartProducts.entrySet();
@@ -372,9 +396,9 @@ public class Cart {
             stmt = connection.createStatement();
 
             String idString = product.getId();
-            double priceInt = product.getPrice();
+            double price = product.getPrice();
 
-            double itemsValue = number * priceInt;
+            double itemsValue = number * price;
 
             PreparedStatement selectAllSt3 = connection.prepareStatement("select id from carts order by id desc  limit 1;");
             ResultSet cartTempId = selectAllSt3.executeQuery();
@@ -419,24 +443,15 @@ public class Cart {
             Products product = it.getKey();
             Integer number = it.getValue();
 
-            PreparedStatement selectAllSt1 = connection.prepareStatement("select id from product_stats where product_id='" + product.getId() + "';");
-            ResultSet rs1 = selectAllSt1.executeQuery();
-            if (rs1.next()) {
-                int productStatsId = rs1.getInt(1);
-
-                PreparedStatement selectAllSt2 = connection.prepareStatement("select purchased_quantity from product_stats where product_id='" + productStatsId + "';");
-                ResultSet rs2 = selectAllSt2.executeQuery();
-                if (rs2.next()) {
-                    int quantity = rs2.getInt(1);
-                    String sql9 = "update product_stats set purchased_quantity=" + quantity + "+" + number + " where id='" + productStatsId + "';";
-                    stmt.executeUpdate(sql9);
-                } else {
-                    int quantity = 0;
-
-                    String sql9 = "update product_stats set purchased_quantity=" + quantity + "+" + number + " where id='" + productStatsId + "';";
-                    stmt.executeUpdate(sql9);
-                }
+            PreparedStatement selectAllSt2 = connection.prepareStatement("select purchased_quantity from product_stats where product_id='" + product.getId() + "';");
+            ResultSet rs2 = selectAllSt2.executeQuery();
+            while (rs2.next()) {
+                int quantity = rs2.getInt(1);
+                int newQuantity = quantity + number;
+                String sql9 = "update product_stats set purchased_quantity=" + newQuantity + " where product_id='" + product.getId() + "';";
+                stmt.executeUpdate(sql9);
             }
+
             PreparedStatement selectAllSt3 = connection.prepareStatement("select id from order_details order by id desc limit 1;");
             ResultSet orderTempId = selectAllSt3.executeQuery();
             while (orderTempId.next()) {
@@ -465,6 +480,6 @@ public class Cart {
         clearCart();
         PreparedStatement select = connection.prepareStatement("select email from clients_info where user_id='" + clientId + "';");
         String email = onlineShop.getResult(select.executeQuery());
-        System.out.println("\nPoprawnie złożono zamówienie. \nAby zamówienie zostało zrealizowane prosimy dokonać płatności " + cartValue + " zł na wskazny numer bankowy: 0000111113333344444 o tytule przelewu \"Numer zamówienia " + orderId + "\". \nDziękujemy za zakupy! \nSzczegółowe informacje związane ze złożonym zamówieniem wysłano na adres email: " + email);
+        System.out.println("\nPoprawnie złożono zamówienie. \nAby zamówienie zostało zrealizowane prosimy dokonać płatności " + String.format("%.2f", cartValue) + " zł na wskazny numer bankowy: 0000111113333344444 o tytule przelewu \"Numer zamówienia " + orderId + "\". \nDziękujemy za zakupy! \nSzczegółowe informacje związane ze złożonym zamówieniem wysłano na adres email: " + email);
     }
 }

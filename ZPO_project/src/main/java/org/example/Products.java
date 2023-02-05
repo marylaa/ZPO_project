@@ -22,7 +22,7 @@ public class Products {
      *
      * @param productName - nazwa produktu
      */
-    public Products(Connection connection, String productName) throws ClassNotFoundException, SQLException {
+    public Products(Connection connection, String productName) throws SQLException {
         this.connection = connection;
 
         PreparedStatement selectAllSt = connection.prepareStatement("select id, category_id, producer, description, price, added_date, user_id, availability from products where name='" + productName + "';");
@@ -33,7 +33,7 @@ public class Products {
             categoryId = rs.getString(2);
             producer = rs.getString(3);
             description = rs.getString(4);
-            price = rs.getInt(5);
+            price = rs.getDouble(5);
             addedDate = rs.getDate(6);
             userId = rs.getString(7);
             availability = rs.getInt(8);

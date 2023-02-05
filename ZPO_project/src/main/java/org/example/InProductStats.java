@@ -5,19 +5,28 @@ import java.sql.*;
 public class InProductStats {
     /**
      * Klasa odpowiadająca za statystyki produkt.
-     *
      */
     private Connection connection;
 
-    public InProductStats(Connection connection) throws SQLException, ClassNotFoundException {
+    /**
+     * Bezparametrowy konstruktor.
+     */
+    public InProductStats() {
+    }
+
+    /**
+     * Parametrowy konstruktor.
+     *
+     * @param connection obiekt klasy Connection
+     */
+    public InProductStats(Connection connection) {
         this.connection = connection;
     }
 
     /**
-     * Metoda dodajaca produkt do tabeli product_stats w bazie danych
+     * Metoda dodajaca produkt do tabeli product_stats w bazie danych.
      *
-     * @param productId - ID produktu
-     *
+     * @param productId - id produktu
      */
     public void addToProductStats(String productId) throws SQLException {
         Statement stmt = connection.createStatement();

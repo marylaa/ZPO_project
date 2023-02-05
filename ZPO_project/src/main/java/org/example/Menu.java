@@ -20,9 +20,20 @@ public class Menu {
     private static Buyer buyer;
     private static Cart cart;
 
-    public Menu() throws SQLException, ClassNotFoundException {
+    /**
+     * Bezparametrowy konstruktor.
+     */
+    public Menu(){
     }
 
+    /**
+     * Metoda symulująca działanie aplikacji.
+     *
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
+     */
     public void startMenu() throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
         if (userId == 0) {
             //https://www.asciiart.eu/food-and-drinks/coffee-and-tea
@@ -75,15 +86,28 @@ public class Menu {
         }
     }
 
-
+    /**
+     * Metoda pobierająca dane od użytkownika.
+     *
+     * @param prompt zapytanie
+     * @return String pobrane dane
+     */
     public String getInput(String prompt) {
         Scanner scanner = new Scanner(System.in);
         System.out.println("\n" + prompt);
         return scanner.nextLine();
     }
 
+    /**
+     * Metoda logujaca używkowika do aplikacji.
+     *
+     * @throws SQLException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
+     * @throws ClassNotFoundException
+     */
     public void login() throws SQLException, NoSuchAlgorithmException, InvalidKeySpecException, ClassNotFoundException {
-        this.onlineShop = new DatabaseContext(Connect.makeConnectionUser());
+        this.onlineShop = new DatabaseContext(Connect.makeConnection("user_login"));
         String userLogin = getInput("Podaj login");
         String userPassword = getInput("Podaj hasło");
         String[] data = onlineShop.getUserInfo(userLogin);
@@ -93,7 +117,6 @@ public class Menu {
             userPassword = getInput("Podaj hasło");
             data = onlineShop.getUserInfo(userLogin);
         }
-
         String hashedPassword = hashPassword(userPassword, data[2]);
         if (data[1].equals(hashedPassword)) {
             this.userId = Integer.valueOf(data[0]);
@@ -101,12 +124,12 @@ public class Menu {
             System.out.println("\nPoprawnie zalogowano.");
 
             if ("buyer".equals(userType)) {
-                this.connection = Connect.makeConnectionBuyer();
+                this.connection = Connect.makeConnection("buyer");
                 this.onlineShop = new DatabaseContext(connection);
                 this.cart = new Cart(userId, onlineShop, connection);
                 this.buyer = new Buyer(cart, onlineShop, connection);
             } else {
-                this.connection = Connect.makeConnectionSeller();
+                this.connection = Connect.makeConnection("seller");
                 this.onlineShop = new DatabaseContext(connection);
                 this.seller = new Seller(onlineShop, connection);
             }
@@ -116,6 +139,16 @@ public class Menu {
         }
     }
 
+    /**
+     * Metoda szyfrująca hasło.
+     * https://www.baeldung.com/java-password-hashing
+     *
+     * @param password hasło do zaszyfrowania
+     * @param salt     sól szyfrująca
+     * @return String zaszyfrowane hasło
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
+     */
     public static String hashPassword(String password, String salt) throws NoSuchAlgorithmException, InvalidKeySpecException {
         int iterations = 10000;
         int keyLength = 512;
@@ -130,13 +163,22 @@ public class Menu {
         return hashedString;
     }
 
+    /**
+     * Metoda wylogowujaca używkowika z aplikacji.
+     *
+     * @param cart koszyk użytkownika
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
+     */
     public void logout(Cart cart) throws ClassNotFoundException, SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
         String action = getInput("Czy na pewno chcesz się wylogować? (tak/nie)");
         switch (action) {
             case "tak":
                 this.userId = 0;
                 this.userType = null;
-                if(cart != null) {
+                if (cart != null) {
                     cart.clearCart();
                 }
                 startMenu();
@@ -149,7 +191,13 @@ public class Menu {
                 logout(cart);
         }
     }
-    public int getId(){
+
+    /**
+     * Metoda zwracająca id użytkownika.
+     *
+     * @return int id użytkownika
+     */
+    public int getId() {
         return userId;
     }
 }

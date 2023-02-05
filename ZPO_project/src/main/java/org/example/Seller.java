@@ -10,19 +10,42 @@ public class Seller {
     private Connection connection;
     private Menu menu;
 
+    /**
+     * Bezparametrowy konstruktor.
+     */
+    public Seller() {
+    }
+
+    /**
+     * Parametrowy konstruktor.
+     *
+     * @param onlineShop obiekt klasy DatabaseContext
+     * @param connection obiekt klasy Connection
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
     public Seller(DatabaseContext onlineShop, Connection connection) throws SQLException, ClassNotFoundException {
         this.onlineShop = onlineShop;
         this.connection = connection;
         this.menu = new Menu();
     }
 
+    /**
+     * Metoda wyświetlająca sprzedawcy jego produkty i obsługująca związane z tym akcje.
+     *
+     * @param id id sprzedawcy
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
+     */
     public void showAndEditProducts(int id) throws SQLException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException {
         onlineShop.printResultSet(onlineShop.getSellerProducts(id), "\nLista twoich produktów:");
 
         String action = menu.getInput("Co chcesz zrobić? \n1 - edytować produkt \n2 - wrócić");
         while (!"1".equals(action) && !"2".equals(action)) {
             System.out.println("Nierozpoznana akcja. Spróbuj ponownie.");
-            action = menu.getInput("\nPodaj numer");
+            action = menu.getInput("Podaj numer");
         }
         switch (action) {
             case "1":
@@ -35,6 +58,11 @@ public class Seller {
         }
     }
 
+    /**
+     * Metoda edytująca informacje dotyczące danego produktu.
+     *
+     * @throws SQLException
+     */
     public void sellerEditProduct() throws SQLException {
         String productName = menu.getInput("Który produkt chcesz edytować?");
         String productId = onlineShop.getProductId(productName);
@@ -54,7 +82,7 @@ public class Seller {
             if (i == 4) {
                 continue;
             }
-            System.out.println("Aktualne informacje o " + column[i] + ": " + productInfo[i]);
+            System.out.println("\nAktualne informacje o " + column[i] + ": " + productInfo[i]);
             input[i] = menu.getInput("Nowe informacje:");
             if ("".equals(input[i])) {
                 input[i] = productInfo[i];
@@ -63,17 +91,29 @@ public class Seller {
         onlineShop.editProduct(productId, input);
     }
 
-    public void sellerAddProducts(int userId) throws SQLException, ClassNotFoundException {
+    /**
+     * Metoda dodająca produkty sprzedającego.
+     *
+     * @param userId id sprzedającego
+     * @throws SQLException
+     */
+    public void sellerAddProducts(int userId) throws SQLException {
         InProductStats inProductStats = new InProductStats(connection);
-        String id = menu.getInput("Podaj id produktu");
-        String category = menu.getInput("Podaj id kategorii");
-        String name = menu.getInput("Podaj nazwę produktu");
-        String producer = menu.getInput("Podaj producenta");
-        String description = menu.getInput("Podaj opis produktu");
+        String id = menu.getInput("Podaj id produktu:");
+        String categoryId = menu.getInput("Podaj id kategorii:");
+        String categoryName = onlineShop.getCategoryName(categoryId);
+        while(categoryName == null) {
+            System.out.println("Kategoria o podanym id nie istnieje. Spróbuj ponownie.");
+            categoryId = menu.getInput("Podaj id kategorii:");
+            categoryName = onlineShop.getCategoryName(categoryId);
+        }
+        String name = menu.getInput("Podaj nazwę produktu:");
+        String producer = menu.getInput("Podaj producenta:");
+        String description = menu.getInput("Podaj opis produktu:");
         double price = -1;
         while (price < 0) {
             try {
-                price = Double.valueOf(menu.getInput("Podaj cenę (w zł)"));
+                price = Double.valueOf(menu.getInput("Podaj cenę (w zł):"));
             } catch (IllegalArgumentException e) {
                 System.out.println("Błąd. Podaj liczbę.");
             }
@@ -81,12 +121,12 @@ public class Seller {
         int availability = -1;
         while (availability < 0) {
             try {
-                availability = Integer.valueOf(menu.getInput("Podaj dostępną liczbę sztuk"));
+                availability = Integer.valueOf(menu.getInput("Podaj dostępną liczbę sztuk:"));
             } catch (IllegalArgumentException e) {
                 System.out.println("Błąd. Podaj liczbę.");
             }
         }
-        onlineShop.addProduct(id, category, name, producer, description, price, userId, availability);
+        onlineShop.addProduct(id, categoryId, name, producer, description, price, userId, availability);
 
         inProductStats.addToProductStats(id);
     }
